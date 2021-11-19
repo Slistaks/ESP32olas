@@ -17,4 +17,10 @@
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>com.espressif.idf.core.idfNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>LIB</name>
+			<value>file:/C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/main</value>
+		</variable>
+	</variableList>
 </projectDescription>
