@@ -625,6 +625,13 @@ C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/wifi_provisioning/C
 C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/wifi_provisioning/CMakeFiles/rebuild_cache.dir
 C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/wifi_provisioning/CMakeFiles/list_install_components.dir
 C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/wifi_provisioning/CMakeFiles/install/strip.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/__idf_abc.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/install/local.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/install.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/edit_cache.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/rebuild_cache.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/list_install_components.dir
+C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/abc/CMakeFiles/install/strip.dir
 C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/main/CMakeFiles/install/local.dir
 C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/main/CMakeFiles/install.dir
 C:/Users/ABCD/Desktop/eclipse_workspace/i2ccap/build/esp-idf/main/CMakeFiles/edit_cache.dir

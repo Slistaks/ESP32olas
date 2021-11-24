@@ -6818,6 +6818,7 @@ LOAD esp-idf/openssl/libopenssl.a
 LOAD esp-idf/spiffs/libspiffs.a
 LOAD esp-idf/ulp/libulp.a
 LOAD esp-idf/wifi_provisioning/libwifi_provisioning.a
+LOAD esp-idf/abc/libabc.a
 LOAD esp-idf/main/libmain.a
 LOAD esp-idf/asio/libasio.a
 LOAD esp-idf/cbor/libcbor.a
@@ -6843,6 +6844,7 @@ LOAD esp-idf/protobuf-c/libprotobuf-c.a
 LOAD esp-idf/mdns/libmdns.a
 LOAD esp-idf/console/libconsole.a
 LOAD esp-idf/json/libjson.a
+LOAD esp-idf/abc/libabc.a
 LOAD esp-idf/esp_pm/libesp_pm.a
 LOAD esp-idf/mbedtls/libmbedtls.a
 LOAD esp-idf/efuse/libefuse.a
@@ -13221,7 +13223,7 @@ LOAD c:/users/abcd/.espressif/tools/xtensa-esp32-elf/esp-2021r1-8.4.0/xtensa-esp
  *fill*         0x000000003f4051c2        0x2 
  .rodata.app_main.str1.4
                 0x000000003f4051c4       0x64 esp-idf/main/libmain.a(i2c_example_main.c.obj)
- .rodata.__func__$5972
+ .rodata.__func__$5973
                 0x000000003f405228        0x9 esp-idf/main/libmain.a(i2c_example_main.c.obj)
  *fill*         0x000000003f405231        0x3 
  .rodata.str1.4

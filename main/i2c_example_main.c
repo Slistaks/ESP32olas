@@ -14,8 +14,10 @@
 #include <stdio.h>
 #include "esp_log.h"
 #include "driver/i2c.h"
+
+
 #include "sdkconfig.h"
-#include "abc.c"
+#include "abc.h"
 //#include "components/bib/include/abc.h"
 
 
@@ -253,6 +255,7 @@ static void i2c_test_task(void *arg)
         } else {
             ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
         }
+
         xSemaphoreGive(print_mux);
         vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
 
