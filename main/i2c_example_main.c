@@ -45,7 +45,7 @@ static const char *TAG = "i2c-example";
 
 #define BH1750_SENSOR_ADDR CONFIG_BH1750_ADDR   /*!< slave address for BH1750 sensor */
 
-#define FDC1004_SENSOR_ADDR 0x50
+//#define FDC1004_SENSOR_ADDR 0x50
 #define FDC1004_SENSOR_REG_ADDR_MANUFACTURER 0xFE	// este registro deberia leerse: 0x5449
 
 #define BH1750_CMD_START CONFIG_BH1750_OPMODE   /*!< Operation mode */
@@ -111,6 +111,10 @@ static esp_err_t __attribute__((unused)) i2c_master_write_slave(i2c_port_t i2c_n
     return ret;
 }
 
+
+
+
+
 /**
  * @brief test code to operate on BH1750 sensor
  *
@@ -135,7 +139,7 @@ static esp_err_t __attribute__((unused)) i2c_master_write_slave(i2c_port_t i2c_n
 /*
  * @brief esta modifico:
  *
- */
+ *
 static esp_err_t i2c_master_sensor_test(i2c_port_t i2c_num, uint8_t *data_h, uint8_t *data_l)
 {
     int ret;
@@ -152,6 +156,8 @@ static esp_err_t i2c_master_sensor_test(i2c_port_t i2c_num, uint8_t *data_h, uin
         return ret;
     }
     vTaskDelay(30 / portTICK_RATE_MS);
+
+
     cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, FDC1004_SENSOR_ADDR << 1 | READ_BIT, ACK_CHECK_EN);
@@ -163,7 +169,7 @@ static esp_err_t i2c_master_sensor_test(i2c_port_t i2c_num, uint8_t *data_h, uin
     return ret;
 }
 
-
+*/
 
 
 
@@ -180,7 +186,7 @@ static esp_err_t i2c_master_sensor_test(i2c_port_t i2c_num, uint8_t *data_h, uin
 /**
  * @brief i2c master initialization
  */
-static esp_err_t i2c_master_init(void)
+static esp_err_t i2c_master_init(void)				// la pase dentro de capacimeter_config()
 {
     int i2c_master_port = I2C_MASTER_NUM;
     i2c_config_t conf = {
@@ -190,7 +196,7 @@ static esp_err_t i2c_master_init(void)
         .scl_io_num = I2C_MASTER_SCL_IO,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
         .master.clk_speed = I2C_MASTER_FREQ_HZ,
-        // .clk_flags = 0,          /*!< Optional, you can use I2C_SCLK_SRC_FLAG_* flags to choose i2c source clock here. */
+        // .clk_flags = 0,          //!< Optional, you can use I2C_SCLK_SRC_FLAG_* flags to choose i2c source clock here.
     };
     esp_err_t err = i2c_param_config(i2c_master_port, &conf);
     if (err != ESP_OK) {
@@ -201,64 +207,75 @@ static esp_err_t i2c_master_init(void)
 
 
 
-/**
- * @brief i2c slave initialization
- */
-static esp_err_t i2c_slave_init(void)
-{
-    int i2c_slave_port = I2C_SLAVE_NUM;
-    i2c_config_t conf_slave = {
-        .sda_io_num = I2C_SLAVE_SDA_IO,
-        .sda_pullup_en = GPIO_PULLUP_ENABLE,
-        .scl_io_num = I2C_SLAVE_SCL_IO,
-        .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .mode = I2C_MODE_SLAVE,
-        .slave.addr_10bit_en = 0,
-        .slave.slave_addr = ESP_SLAVE_ADDR,
-    };
-    esp_err_t err = i2c_param_config(i2c_slave_port, &conf_slave);
-    if (err != ESP_OK) {
-        return err;
-    }
-    return i2c_driver_install(i2c_slave_port, conf_slave.mode, I2C_SLAVE_RX_BUF_LEN, I2C_SLAVE_TX_BUF_LEN, 0);
-}
-
-
-
 
 
 static void i2c_test_task(void *arg)
 {
-    int ret;
+
     uint32_t task_idx = (uint32_t)arg;
-    //uint8_t *data = (uint8_t *)malloc(DATA_LENGTH);
-    //uint8_t *data_wr = (uint8_t *)malloc(DATA_LENGTH);
-    //uint8_t *data_rd = (uint8_t *)malloc(DATA_LENGTH);
-    uint8_t sensor_data_h, sensor_data_l;
 
 
+
+
+    uint8_t capdac= 0;
+    float capacidad;
+    float desviacionAceptable= 0.2;
+    uint8_t cantMuestras= 20;
+    mean_reliability estructuraResultado;
+
+
+    capacimeter_init(I2C_MASTER_NUM, capdac, CUATROCIENTAS_Ss);		// antes abria el puerto, ahora unicamente ejecuta la configuracion inicial (meas_conf y cap_config).
+    usleep(50000);
 
 
     while (1) {
 
-        //ESP_LOGI(TAG, "TASK[%d] test cnt: %d", task_idx, cnt++);
-        ret = i2c_master_sensor_test(I2C_MASTER_NUM, &sensor_data_h, &sensor_data_l);
+        //ESP_LOGI(TAG,"");
+    	//ESP_LOGE(TAG, "I2C Timeout");
+    	//ESP_LOGW(TAG, "%s", esp_err_to_name(ret));
         xSemaphoreTake(print_mux, portMAX_DELAY);
-        if (ret == ESP_ERR_TIMEOUT) {
-            ESP_LOGE(TAG, "I2C Timeout");
-        } else if (ret == ESP_OK) {
-            printf("*******************\n");
-            printf("TASK[%d]  MASTER READ SENSOR\n", task_idx);
-            printf("*******************\n");
-            printf("data_h: %02x\n", sensor_data_h);
-            printf("data_l: %02x\n", sensor_data_l);
-        } else {
-            ESP_LOGW(TAG, "%s: No ack, sensor not connected...skip...", esp_err_to_name(ret));
-        }
+        printf("TASK[%d]  MASTER READ SENSOR\n", task_idx);
+
+
+
+
+
+        //debug:
+        printf("\n________________________zona debug:________________________\n\n");
+
+
+
+
+        //capacimeter_config(etc);
+        //read_processed_cap_pF(medidaNIVEL, desviacionAceptable, cantMuestras, &estructuraResultado);
+        //printf("media: %0.2f\nconfiabilidad: %0.2f\n", estructuraResultado.mean+3.125*capdac, estructuraResultado.reliability);
+
+
+        // medida de nivel:
+        capacimeter_config(CUATROCIENTAS_Ss, medidaNIVEL);
+        usleep(8000);
+        capdac= read_autoranging_cap_pF(&capacidad, medidaNIVEL);
+        printf("capacidad: %0.2f\ncapdac: %d\n", capacidad+capdac*3.125, capdac);
+
+
+        // medida diferencial:
+        capacimeter_config(CUATROCIENTAS_Ss, medidaDIFERENCIAL);
+        usleep(8000);
+        read_single_cap_pF(&capacidad, medidaDIFERENCIAL);
+        printf("capacidad diferencial: %0.2f<<<<<<<<\n", capacidad);
+
+
+
+
+        printf("\n________________________fin zona debug.________________________\n\n");
+        //debug.
+
+
+
+
 
         xSemaphoreGive(print_mux);
         vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
-
 
     }
 
@@ -292,33 +309,15 @@ static void i2c_test_task(void *arg)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void app_main(void)
 {
     print_mux = xSemaphoreCreateMutex();
-#if !CONFIG_IDF_TARGET_ESP32C3
-    ESP_ERROR_CHECK(i2c_slave_init());
-#endif
+
     ESP_ERROR_CHECK(i2c_master_init());
     xTaskCreate(i2c_test_task, "i2c_test_task_0", 1024 * 2, (void *)0, 10, NULL);
-    xTaskCreate(i2c_test_task, "i2c_test_task_1", 1024 * 2, (void *)1, 10, NULL);
+    //xTaskCreate(i2c_test_task, "i2c_test_task_1", 1024 * 2, (void *)1, 10, NULL);
 }
+
+
+
+
