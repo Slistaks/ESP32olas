@@ -332,10 +332,14 @@ static void vLevelMeasureTask(void *arg)
 
     uint8_t capdac= 0;
     uint8_t sampleNumber= 0;		// de 0 a 50
+    uint32_t packetID= 0;
+    char packetID_str[11];
+
     float capacidad[50];
     float desviacionAceptable= 0.2;
     uint8_t cantMuestras= 4;
     mean_reliability estructuraResultado;
+
     char capacidad_str[7];	//"ccc.cc\0"
     char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
 
@@ -364,7 +368,7 @@ static void vLevelMeasureTask(void *arg)
         capacimeter_config(CUATROCIENTAS_Ss, medidaNIVEL);
         usleep(8000);
         capdac= read_autoranging_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
-        printf("medida %d\ncapacidad: %0.2f\ncapdac: %d\n", sampleNumber, capacidad[sampleNumber]+capdac*3.125, capdac);
+        //printf("medida %d\ncapacidad: %0.2f\ncapdac: %d\n", sampleNumber, capacidad[sampleNumber]+capdac*3.125, capdac);
 
 
         // medida diferencial MEDIDA UNICA:
@@ -383,10 +387,10 @@ static void vLevelMeasureTask(void *arg)
 		if(49<sampleNumber){
 
 			strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf..
-			sprintf(capacidad_str, "%.2f", capacidad[0]+capdac*3.125);
-			strcat(dataToPublish, capacidad_str);
+			sprintf(packetID_str, "%d", packetID++);
+			strcat(dataToPublish, packetID_str);
 
-			for(int i=1; i<sampleNumber; i++){
+			for(int i=0; i<sampleNumber; i++){
 				strcat(dataToPublish, ",");
 				sprintf(capacidad_str, "%.2f", capacidad[i]+3.125*capdac);
 				strcat(dataToPublish, capacidad_str);
@@ -405,7 +409,7 @@ static void vLevelMeasureTask(void *arg)
 
         xSemaphoreGive(print_mux);
         //vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
-        vTaskDelay(3/portTICK_RATE_MS);
+        vTaskDelay(20/portTICK_RATE_MS);
     }
 
 
