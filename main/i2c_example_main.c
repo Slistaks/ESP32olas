@@ -15,6 +15,29 @@
 #include "esp_log.h"
 #include "driver/i2c.h"
 
+//mqtt headers
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include "esp_wifi.h"
+#include "esp_system.h"
+#include "nvs_flash.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "protocol_examples_common.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "freertos/queue.h"
+
+#include "lwip/sockets.h"
+#include "lwip/dns.h"
+#include "lwip/netdb.h"
+
+#include "mqtt_client.h"
+//mqtt headers
+
 
 #include "sdkconfig.h"
 #include "abc.h"
@@ -135,45 +158,136 @@ static esp_err_t __attribute__((unused)) i2c_master_write_slave(i2c_port_t i2c_n
 
 
 
-
 /*
- * @brief esta modifico:
- *
- *
-static esp_err_t i2c_master_sensor_test(i2c_port_t i2c_num, uint8_t *data_h, uint8_t *data_l)
+ * Funciones MQTT
+ *___________________________________________________________________________________________________________________________________________
+ */
+
+
+
+
+
+static void log_error_if_nonzero(const char * message, int error_code)
 {
-    int ret;
-    int pointer_reg= FDC1004_SENSOR_REG_ADDR_MANUFACTURER;
-
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, FDC1004_SENSOR_ADDR << 1 | WRITE_BIT, ACK_CHECK_EN);
-    i2c_master_write_byte(cmd, pointer_reg, ACK_CHECK_EN);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_RATE_MS);
-    i2c_cmd_link_delete(cmd);
-    if (ret != ESP_OK) {
-        return ret;
+    if (error_code != 0) {
+        ESP_LOGE(TAG, "Last error %s: 0x%x", message, error_code);
     }
-    vTaskDelay(30 / portTICK_RATE_MS);
-
-
-    cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, FDC1004_SENSOR_ADDR << 1 | READ_BIT, ACK_CHECK_EN);
-    i2c_master_read_byte(cmd, data_h, ACK_VAL);
-    i2c_master_read_byte(cmd, data_l, NACK_VAL);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_RATE_MS);
-    i2c_cmd_link_delete(cmd);
-    return ret;
 }
 
-*/
+
+
+esp_mqtt_client_handle_t client;
+
+static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
+{
+    //esp_mqtt_client_handle_t client = event->client;
+	client = event->client;
+
+    int msg_id;
+    // your_context_t *context = event->context;
+    switch (event->event_id) {
+
+        case MQTT_EVENT_CONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+            //msg_id = esp_mqtt_client_publish(client, "/topic/nivel/sensor_n", "Sensor n conectado", 0, 1, 0);
+
+            //ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+
+            //msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);					// no necesita suscribirse.
+            //ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+            //msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);					// no necesita suscribirse.
+            //ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+            //msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");					// no se suscribio, entonces no se des-suscribe.
+            //ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+            break;
+
+        case MQTT_EVENT_DISCONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+            break;
+
+        //case MQTT_EVENT_SUBSCRIBED:
+            //ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+            //msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
+            //ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+            //break;
+
+        /*
+        case MQTT_EVENT_UNSUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+            break;
+            */
+
+        case MQTT_EVENT_PUBLISHED:
+            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+            break;
+
+        /*
+        case MQTT_EVENT_DATA:
+            ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+            printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
+            printf("DATA=%.*s\r\n", event->data_len, event->data);
+            break;
+            */
+
+        case MQTT_EVENT_ERROR:
+            ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+            if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
+                log_error_if_nonzero("reported from esp-tls", event->error_handle->esp_tls_last_esp_err);
+                log_error_if_nonzero("reported from tls stack", event->error_handle->esp_tls_stack_err);
+                log_error_if_nonzero("captured as transport's socket errno",  event->error_handle->esp_transport_sock_errno);
+                ESP_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
+
+            }
+            break;
+
+        default:
+            ESP_LOGI(TAG, "Other event id:%d", event->event_id);
+            break;
+    }
+    return ESP_OK;
+}
 
 
 
 
+
+
+static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
+    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
+    mqtt_event_handler_cb(event_data);
+}
+
+
+
+
+
+
+
+
+
+static void mqtt_app_start(void)
+{
+    esp_mqtt_client_config_t mqtt_cfg = {
+        .uri = CONFIG_BROKER_URL,
+    };
+
+    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
+    esp_mqtt_client_start(client);
+}
+
+
+
+
+
+
+
+/*
+ * Funciones MQTT
+ *_______________________________________________________________________________________________________________________________________________________
+ */
 
 
 
@@ -209,19 +323,21 @@ static esp_err_t i2c_master_init(void)				// la pase dentro de capacimeter_confi
 
 
 
-static void i2c_test_task(void *arg)
+static void vLevelMeasureTask(void *arg)
 {
 
     uint32_t task_idx = (uint32_t)arg;
 
 
 
-
     uint8_t capdac= 0;
-    float capacidad;
+    uint8_t sampleNumber= 0;		// de 0 a 50
+    float capacidad[50];
     float desviacionAceptable= 0.2;
-    uint8_t cantMuestras= 20;
+    uint8_t cantMuestras= 4;
     mean_reliability estructuraResultado;
+    char capacidad_str[7];	//"ccc.cc\0"
+    char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
 
 
     capacimeter_init(I2C_MASTER_NUM, capdac, CUATROCIENTAS_Ss);		// antes abria el puerto, ahora unicamente ejecuta la configuracion inicial (meas_conf y cap_config).
@@ -233,50 +349,63 @@ static void i2c_test_task(void *arg)
         //ESP_LOGI(TAG,"");
     	//ESP_LOGE(TAG, "I2C Timeout");
     	//ESP_LOGW(TAG, "%s", esp_err_to_name(ret));
+
         xSemaphoreTake(print_mux, portMAX_DELAY);
-        printf("TASK[%d]  MASTER READ SENSOR\n", task_idx);
 
 
 
-
-
-        //debug:
-        printf("\n________________________zona debug:________________________\n\n");
-
-
-
-
+        // medida de nivel MEDIA DE VARIAS
         //capacimeter_config(etc);
         //read_processed_cap_pF(medidaNIVEL, desviacionAceptable, cantMuestras, &estructuraResultado);
         //printf("media: %0.2f\nconfiabilidad: %0.2f\n", estructuraResultado.mean+3.125*capdac, estructuraResultado.reliability);
 
 
-        // medida de nivel:
+        // medida de nivel AUTORANGO:
         capacimeter_config(CUATROCIENTAS_Ss, medidaNIVEL);
         usleep(8000);
-        capdac= read_autoranging_cap_pF(&capacidad, medidaNIVEL);
-        printf("capacidad: %0.2f\ncapdac: %d\n", capacidad+capdac*3.125, capdac);
+        capdac= read_autoranging_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
+        printf("medida %d\ncapacidad: %0.2f\ncapdac: %d\n", sampleNumber, capacidad[sampleNumber]+capdac*3.125, capdac);
 
 
-        // medida diferencial:
-        capacimeter_config(CUATROCIENTAS_Ss, medidaDIFERENCIAL);
-        usleep(8000);
-        read_single_cap_pF(&capacidad, medidaDIFERENCIAL);
-        printf("capacidad diferencial: %0.2f<<<<<<<<\n", capacidad);
+        // medida diferencial MEDIDA UNICA:
+        //capacimeter_config(CUATROCIENTAS_Ss, medidaDIFERENCIAL);
+        //usleep(8000);
+        //read_single_cap_pF(&capacidad, medidaDIFERENCIAL);
+        //printf("capacidad diferencial: %0.2f<<<<<<<<\n", capacidad);
 
 
 
 
-        printf("\n________________________fin zona debug.________________________\n\n");
-        //debug.
+
+
+		sampleNumber++;
+
+		if(49<sampleNumber){
+
+			strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf..
+			sprintf(capacidad_str, "%.2f", capacidad[0]+capdac*3.125);
+			strcat(dataToPublish, capacidad_str);
+
+			for(int i=1; i<sampleNumber; i++){
+				strcat(dataToPublish, ",");
+				sprintf(capacidad_str, "%.2f", capacidad[i]+3.125*capdac);
+				strcat(dataToPublish, capacidad_str);
+			}
+
+			strcat(dataToPublish, "]");			// no me deja poner dentro de sprintf..
+			printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
+			esp_mqtt_client_publish(client, "/topic/nivel/sensor_n", dataToPublish, 0, 1, 0);
+			sampleNumber= 0;
+
+		}
 
 
 
 
 
         xSemaphoreGive(print_mux);
-        vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
-
+        //vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
+        vTaskDelay(3/portTICK_RATE_MS);
     }
 
 
@@ -313,10 +442,46 @@ void app_main(void)
 {
     print_mux = xSemaphoreCreateMutex();
 
+    //mqtt
+    esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
+    esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
+    esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
+
+    ESP_ERROR_CHECK(nvs_flash_init());
+    ESP_ERROR_CHECK(esp_netif_init());
+	ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+	ESP_ERROR_CHECK(example_connect());	// This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
+										// Read "Establishing Wi-Fi or Ethernet Connection" section in examples/protocols/README.md for more information about this function.
+
+	mqtt_app_start();
+    //mqtt
+
+
     ESP_ERROR_CHECK(i2c_master_init());
-    xTaskCreate(i2c_test_task, "i2c_test_task_0", 1024 * 2, (void *)0, 10, NULL);
-    //xTaskCreate(i2c_test_task, "i2c_test_task_1", 1024 * 2, (void *)1, 10, NULL);
+
+
+    xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
+    //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_1", 1024 * 2, (void *)1, 10, NULL);
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

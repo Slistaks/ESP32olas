@@ -1482,6 +1482,25 @@ rule C_STATIC_LIBRARY_LINKER____idf_wifi_provisioning
 #############################################
 # Rule for compiling C files.
 
+rule C_COMPILER____idf_protocol_examples_common
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ccache C:\Users\ABCD\.espressif\tools\xtensa-esp32-elf\esp-2021r1-8.4.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-gcc.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out   -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for linking C static library.
+
+rule C_STATIC_LIBRARY_LINKER____idf_protocol_examples_common
+  command = cmd.exe /C "$PRE_LINK && C:\Users\ABCD\.espressif\tools\cmake\3.16.4\bin\cmake.exe -E remove $TARGET_FILE && C:\Users\ABCD\.espressif\tools\xtensa-esp32-elf\esp-2021r1-8.4.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-ar.exe qc $TARGET_FILE $LINK_FLAGS $in && C:\Users\ABCD\.espressif\tools\xtensa-esp32-elf\esp-2021r1-8.4.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-ranlib.exe $TARGET_FILE && $POST_BUILD"
+  description = Linking C static library $TARGET_FILE
+  restat = $RESTAT
+
+
+#############################################
+# Rule for compiling C files.
+
 rule C_COMPILER____idf_abc
   depfile = $DEP_FILE
   deps = gcc
@@ -1521,7 +1540,7 @@ rule C_STATIC_LIBRARY_LINKER____idf_main
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = C:\Users\ABCD\.espressif\tools\cmake\3.16.4\bin\cmake.exe -SC:\Users\ABCD\Desktop\eclipse_workspace\i2ccap -BC:\Users\ABCD\Desktop\eclipse_workspace\i2ccap\build
+  command = C:\Users\ABCD\.espressif\tools\cmake\3.16.4\bin\cmake.exe -SC:\Users\ABCD\Desktop\eclipse_workspace\espOlas -BC:\Users\ABCD\Desktop\eclipse_workspace\espOlas\build
   description = Re-running CMake...
   generator = 1
 

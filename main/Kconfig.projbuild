@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "I2C configuration"
 
     menu "I2C Master"
         config I2C_MASTER_SCL
@@ -123,5 +123,19 @@ menu "Example Configuration"
             default 0x23 if BH1750_ONETIME_L_RESOLUTION
 
     endmenu
+
+endmenu
+
+menu "Broker configuration"
+
+    config BROKER_URL
+        string "Broker URL"
+        default "mqtt://45.58.37.127"
+        help
+            URL of the broker to connect to
+
+    config BROKER_URL_FROM_STDIN
+        bool
+        default y if BROKER_URL = "FROM_STDIN"
 
 endmenu
