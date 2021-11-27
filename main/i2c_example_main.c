@@ -18,6 +18,7 @@
 //interrupt
 #include <stdlib.h>
 #include "driver/gpio.h"
+#include "driver/timer.h"
 //interrupt
 
 //mqtt headers
@@ -85,6 +86,115 @@ static const char *TAG = "i2c-example";
 #define ACK_VAL 0x0                             /*!< I2C ack value */
 #define NACK_VAL 0x1                            /*!< I2C nack value */
 
+
+
+
+#define TIMER_DIVIDER         (16)  //  Hardware timer clock divider
+#define TIMER_SCALE           (( 80*1000000 ) / TIMER_DIVIDER)  // convert counter value to seconds	//lo reemplace porque no me lo tomaba al define original.
+
+typedef struct {
+    int timer_group;
+    int timer_idx;
+    int alarm_interval;
+    bool auto_reload;
+} example_timer_info_t;
+
+/**
+ * @brief A sample structure to pass events from the timer ISR to task
+ *
+ */
+typedef struct {
+    example_timer_info_t info;
+    uint64_t timer_counter_value;
+} example_timer_event_t;
+
+static xQueueHandle s_timer_queue;
+
+
+/*
+ * A simple helper function to print the raw timer counter value
+ * and the counter value converted to seconds
+ */
+static void inline print_timer_counter(uint64_t counter_value)
+{
+    printf("Counter: 0x%08x%08x\r\n", (uint32_t) (counter_value >> 32),
+           (uint32_t) (counter_value));
+    printf("Time   : %.8f s\r\n", (double) counter_value / TIMER_SCALE);
+}
+
+static bool IRAM_ATTR timer_group_isr_callback(void *args)
+{
+    BaseType_t high_task_awoken = pdFALSE;
+    example_timer_info_t *info = (example_timer_info_t *) args;
+
+    uint64_t timer_counter_value = timer_group_get_counter_value_in_isr(info->timer_group, info->timer_idx);
+
+    /* Prepare basic event data that will be then sent back to task */
+    example_timer_event_t evt = {
+        .info.timer_group = info->timer_group,
+        .info.timer_idx = info->timer_idx,
+        .info.auto_reload = info->auto_reload,
+        .info.alarm_interval = info->alarm_interval,
+        .timer_counter_value = timer_counter_value
+    };
+
+    if (!info->auto_reload) {
+        timer_counter_value += info->alarm_interval * TIMER_SCALE;
+        timer_group_set_alarm_value_in_isr(info->timer_group, info->timer_idx, timer_counter_value);
+    }
+
+    /* Now just send the event data back to the main program task */
+    xQueueSendFromISR(s_timer_queue, &evt, &high_task_awoken);
+
+    return high_task_awoken == pdTRUE; // return whether we need to yield at the end of ISR
+}
+
+/**
+ * @brief Initialize selected timer of timer group
+ *
+ * @param group Timer Group number, index from 0
+ * @param timer timer ID, index from 0
+ * @param auto_reload whether auto-reload on alarm event
+ * @param timer_interval_sec interval of alarm
+ */
+static void example_tg_timer_init(int group, int timer, bool auto_reload, int timer_interval_milisec)
+{
+    /* Select and initialize basic parameters of the timer */
+    timer_config_t config = {
+        .divider = TIMER_DIVIDER,
+        .counter_dir = TIMER_COUNT_UP,
+        .counter_en = TIMER_PAUSE,
+        .alarm_en = TIMER_ALARM_DIS,		//arranca deshabilitada la interrupcion.
+        .auto_reload = auto_reload,
+    }; // default clock source is APB
+    timer_init(group, timer, &config);
+
+    /* Timer's counter will initially start from value below.
+       Also, if auto_reload is set, this value will be automatically reload on alarm */
+    timer_set_counter_value(group, timer, 0);
+
+    /* Configure the alarm value and the interrupt on alarm. */
+    timer_set_alarm_value(group, timer, timer_interval_milisec * TIMER_SCALE / 1000);
+    //timer_enable_intr(group, timer);
+
+
+    example_timer_info_t *timer_info = calloc(1, sizeof(example_timer_info_t));
+    timer_info->timer_group = group;
+    timer_info->timer_idx = timer;
+    timer_info->auto_reload = auto_reload;
+    timer_info->alarm_interval = timer_interval_milisec;
+    timer_isr_callback_add(group, timer, timer_group_isr_callback, timer_info, 0);
+
+    timer_start(group, timer);
+    //timer_disable_intr(group, timer);	//si no la habilito pero no la deshabilito esta habilitada.
+}
+
+
+
+
+
+
+
 SemaphoreHandle_t print_mux = NULL;
 
 
@@ -101,21 +211,82 @@ SemaphoreHandle_t print_mux = NULL;
 
 static xQueueHandle gpio_evt_queue = NULL;
 
+
+
+
+
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     uint32_t gpio_num = (uint32_t) arg;
     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
 
+
+
+
+
+
+
+
 static void gpio_task(void* arg)
 {
     uint32_t io_num;
+    uint8_t gpio_level;
+
+    uint8_t midiendo= 0;	// ES PARA DEBUG, PONER DONDE VA.
+    uint8_t parar= 0;		// ES PARA DEBUG, PONER DONDE VA.
+
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-            printf("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+
+        	gpio_level= gpio_get_level(io_num);
+            printf("GPIO[%d] intr, val: %d\n", io_num, gpio_level);
+
+
+
+            if(gpio_level){			//positive edge
+
+            	if(midiendo){
+            		parar= 0;
+            	}else{
+            		printf("interrupcion habilitada\n");
+            		timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
+            		timer_enable_intr(TIMER_GROUP_0, TIMER_0);
+            	}
+
+
+
+            }else{					//negative edge
+
+
+
+
+            }
+
+
+
         }
     }
 }
+
+
+
+
+
+
+
+static void timer_task(void* arg)
+{
+	example_timer_event_t evt;
+
+    for(;;) {
+    	if(xQueueReceive(s_timer_queue, &evt, portMAX_DELAY)){
+    		printf("Group[%d], timer[%d] alarm event\n", evt.info.timer_group, evt.info.timer_idx);
+
+    	}
+    }
+}
+
 
 
 
@@ -465,26 +636,21 @@ static void vLevelMeasureTask(void *arg)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void app_main(void)
 {
     print_mux = xSemaphoreCreateMutex();
+
+
+    //timer
+    s_timer_queue = xQueueCreate(10, sizeof(example_timer_event_t));
+    example_tg_timer_init(TIMER_GROUP_0, TIMER_0, true, 50);			//50 ms int time
+    //example_tg_timer_init(TIMER_GROUP_1, TIMER_0, false, 5);
+    //timer
+
+
+
+
+
 
     //mqtt
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
@@ -508,7 +674,7 @@ void app_main(void)
     ESP_ERROR_CHECK(i2c_master_init());
 
 
-    xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
+    //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
     //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_1", 1024 * 2, (void *)1, 10, NULL);
 
 
@@ -530,6 +696,8 @@ void app_main(void)
 	gpio_config(&io_conf);
 
 
+
+
 	// pin como entrada, interrupcion:
 	//interrupt of any edge
 	io_conf.intr_type = GPIO_INTR_ANYEDGE;
@@ -542,13 +710,14 @@ void app_main(void)
 	gpio_config(&io_conf);
 
 
-	//change gpio intrrupt type for one pin
-	//gpio_set_intr_type(GPIO_INPUT_IO_0, GPIO_INTR_ANYEDGE);
+
 
 	//create a queue to handle gpio event from isr
 	gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
 	//start gpio task
-	xTaskCreate(gpio_task, "gpio_task_example", 2048, NULL, 10, NULL);
+	xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 10, NULL);
+	//start timer task
+	xTaskCreate(timer_task, "timer_task", 2048, NULL, 10, NULL);
 
 	//install gpio isr service
 	gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
@@ -557,6 +726,17 @@ void app_main(void)
 
     // PIN INTERRUPT
 
+
+	while(1){
+
+
+		gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+		vTaskDelay(500/portTICK_RATE_MS);
+
+		gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+		vTaskDelay(500/portTICK_RATE_MS);
+
+	}
 
 
 }
