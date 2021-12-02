@@ -86,8 +86,9 @@ static const char *TAG = "i2c-example";
 #define ACK_VAL 0x0                             /*!< I2C ack value */
 #define NACK_VAL 0x1                            /*!< I2C nack value */
 
-
-
+#define ALARM_MS 50
+#define cantMedidas 50
+#define NUMERO_DE_SENSOR 0
 
 #define TIMER_DIVIDER         (16)  //  Hardware timer clock divider
 #define TIMER_SCALE           (( 80*1000000 ) / TIMER_DIVIDER)  // convert counter value to seconds	//lo reemplace porque no me lo tomaba al define original.
@@ -164,7 +165,7 @@ static void example_tg_timer_init(int group, int timer, bool auto_reload, int ti
         .divider = TIMER_DIVIDER,
         .counter_dir = TIMER_COUNT_UP,
         .counter_en = TIMER_PAUSE,
-        .alarm_en = TIMER_ALARM_DIS,		//arranca deshabilitada la interrupcion.
+        .alarm_en = TIMER_ALARM_EN,
         .auto_reload = auto_reload,
     }; // default clock source is APB
     timer_init(group, timer, &config);
@@ -185,8 +186,9 @@ static void example_tg_timer_init(int group, int timer, bool auto_reload, int ti
     timer_info->alarm_interval = timer_interval_milisec;
     timer_isr_callback_add(group, timer, timer_group_isr_callback, timer_info, 0);
 
+    timer_disable_intr(group, timer);		// inicia deshabilitado
     timer_start(group, timer);
-    //timer_disable_intr(group, timer);	//si no la habilito pero no la deshabilito esta habilitada.
+
 }
 
 
@@ -197,7 +199,10 @@ static void example_tg_timer_init(int group, int timer, bool auto_reload, int ti
 
 SemaphoreHandle_t print_mux = NULL;
 
+esp_mqtt_client_handle_t client;
 
+uint8_t midiendo= 0;	// no necesitan semaforo, uno lee y el otro escribe y no intercambian roles (timer y gpio ISRs).
+uint8_t parar= 1;		// no necesitan semaforo, uno lee y el otro escribe y no intercambian roles (timer y gpio ISRs).
 
 
 
@@ -228,36 +233,43 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 
 
 
-static void gpio_task(void* arg)
+static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 {
     uint32_t io_num;
     uint8_t gpio_level;
 
-    uint8_t midiendo= 0;	// ES PARA DEBUG, PONER DONDE VA.
-    uint8_t parar= 0;		// ES PARA DEBUG, PONER DONDE VA.
 
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+
 
         	gpio_level= gpio_get_level(io_num);
             printf("GPIO[%d] intr, val: %d\n", io_num, gpio_level);
 
 
 
-            if(gpio_level){			//positive edge
+            if(gpio_level){			//POSITIVE EDGE
 
             	if(midiendo){
             		parar= 0;
             	}else{
-            		printf("interrupcion habilitada\n");
+
+            		//no reconfiguro alarm time porque siempre uso 50ms tanto para antirebote como para enviar datos.
+            		//caso que se necesite que sean tiempos distintos, agregar aca configuracion de alarm time.
             		timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
             		timer_enable_intr(TIMER_GROUP_0, TIMER_0);
+
             	}
 
 
 
-            }else{					//negative edge
+            }else{					//NEGATIVE EDGE
 
+            	if(midiendo){
+            		parar= 1;
+            	}else{
+            		timer_disable_intr(TIMER_GROUP_0, TIMER_0);
+            	}
 
 
 
@@ -275,13 +287,119 @@ static void gpio_task(void* arg)
 
 
 
-static void timer_task(void* arg)
+static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
 	example_timer_event_t evt;
 
+	char topic[50];
+	sprintf(topic, "/topic/nivel/sensor_%d", NUMERO_DE_SENSOR);
+
+	uint8_t pararConfirmado= 0;
+															//Para toma de medidas:
+	uint8_t capdac= 0;
+	uint8_t sampleNumber= 0;
+	uint32_t packetID= 0;
+	char packetID_str[11];
+	char capacidad_str[7];	//"ccc.cc\0"
+	char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
+
+	float capacidad[50];
+
+
+	float desviacionAceptable= 0.2;
+	uint8_t cantMuestras= 5;
+	mean_reliability estructuraResultado;
+
+
+															//Para toma de medidas.
+
+
+
+
     for(;;) {
+
     	if(xQueueReceive(s_timer_queue, &evt, portMAX_DELAY)){
-    		printf("Group[%d], timer[%d] alarm event\n", evt.info.timer_group, evt.info.timer_idx);
+
+    		//printf("timer interrumpio<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+
+    		//xSemaphoreTake(print_mux, portMAX_DELAY);
+
+    		//printf("Group[%d], timer[%d] alarm event\n", evt.info.timer_group, evt.info.timer_idx);
+
+    		if(parar){
+    			pararConfirmado++;
+    		}else{
+    			pararConfirmado= 0;
+    		}
+
+    		midiendo= 1;
+
+
+    		// TOMA DE MEDIDA:
+
+
+    		if(sampleNumber==0){				// medida de nivel AUTORANGO la primer medida, despues medidas normales:
+				capdac= read_autoranging_cap_pF(capacidad, medidaNIVEL);
+				printf("primer medida, autoranging\ncapacidad: %0.2f\ncapdac: %d\n", capacidad[0]+capdac*3.125, capdac);
+    		}else{
+    			//read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
+    			read_processed_cap_pF(medidaNIVEL, desviacionAceptable, cantMuestras, &estructuraResultado);
+    			capacidad[sampleNumber]= estructuraResultado.mean;
+    		}
+    		sampleNumber++;
+
+
+
+
+
+
+    		if( (cantMedidas-1) <sampleNumber){
+
+    			//ENVIAR
+				strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf..
+
+				//debug:
+				//strcpy(dataToPublish, "12");
+				//debug.
+
+				sprintf(packetID_str, "%d", packetID++);
+				strcat(dataToPublish, packetID_str);
+
+
+				for(int i=0; i<sampleNumber; i++){
+					strcat(dataToPublish, ",");
+					sprintf(capacidad_str, "%.2f", capacidad[i]+3.125*capdac);
+					strcat(dataToPublish, capacidad_str);
+				}
+
+				strcat(dataToPublish, "]");			// no me deja poner dentro de sprintf..
+				printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
+				esp_mqtt_client_publish(client, topic, dataToPublish, 0, 1, 0);
+				printf("publico<<<<\n");
+				//FIN ENVIAR
+
+				sampleNumber= 0;
+
+				if(pararConfirmado>=2){
+					midiendo= 0;
+					timer_disable_intr(TIMER_GROUP_0, TIMER_0);
+				}
+
+    		}
+
+
+
+			//xSemaphoreGive(print_mux);
+			//vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
+			//vTaskDelay(1/portTICK_RATE_MS);
+
+
+
+    		// FIN TOMA DE MEDIDAS.
+
+
+
+
 
     	}
     }
@@ -391,16 +509,19 @@ esp_mqtt_client_handle_t client;
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
+	char msg[50];	//escribo la cadena para no contar y errarle
+	sprintf(msg, "Sensor %d conectado", NUMERO_DE_SENSOR);
+
     //esp_mqtt_client_handle_t client = event->client;
 	client = event->client;
 
-    int msg_id;
+    //int msg_id;
     // your_context_t *context = event->context;
     switch (event->event_id) {
 
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-            //msg_id = esp_mqtt_client_publish(client, "/topic/nivel/sensor_n", "Sensor n conectado", 0, 1, 0);
+            esp_mqtt_client_publish(client, "/topic/nivel/connected_sensors", msg, 0, 1, 0);
 
             //ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 
@@ -533,7 +654,7 @@ static esp_err_t i2c_master_init(void)				// la pase dentro de capacimeter_confi
 
 
 
-
+/*
 static void vLevelMeasureTask(void *arg)
 {
 
@@ -549,7 +670,7 @@ static void vLevelMeasureTask(void *arg)
     float capacidad[50];
     float desviacionAceptable= 0.2;
     uint8_t cantMuestras= 4;
-    mean_reliability estructuraResultado;
+    //mean_reliability estructuraResultado;
 
     char capacidad_str[7];	//"ccc.cc\0"
     char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
@@ -565,7 +686,7 @@ static void vLevelMeasureTask(void *arg)
     	//ESP_LOGE(TAG, "I2C Timeout");
     	//ESP_LOGW(TAG, "%s", esp_err_to_name(ret));
 
-        xSemaphoreTake(print_mux, portMAX_DELAY);
+        //xSemaphoreTake(print_mux, portMAX_DELAY);
 
 
 
@@ -618,7 +739,7 @@ static void vLevelMeasureTask(void *arg)
 
 
 
-        xSemaphoreGive(print_mux);
+        //xSemaphoreGive(print_mux);
         //vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
         vTaskDelay(20/portTICK_RATE_MS);
     }
@@ -630,7 +751,7 @@ static void vLevelMeasureTask(void *arg)
     vTaskDelete(NULL);
 
 }
-
+*/
 
 
 
@@ -641,9 +762,12 @@ void app_main(void)
     print_mux = xSemaphoreCreateMutex();
 
 
+
+
+
     //timer
     s_timer_queue = xQueueCreate(10, sizeof(example_timer_event_t));
-    example_tg_timer_init(TIMER_GROUP_0, TIMER_0, true, 50);			//50 ms int time
+    example_tg_timer_init(TIMER_GROUP_0, TIMER_0, true, ALARM_MS);
     //example_tg_timer_init(TIMER_GROUP_1, TIMER_0, false, 5);
     //timer
 
@@ -672,6 +796,10 @@ void app_main(void)
 
 
     ESP_ERROR_CHECK(i2c_master_init());
+    capacimeter_init(I2C_MASTER_NUM, 0, CUATROCIENTAS_Ss);		// antes abria el puerto, ahora unicamente ejecuta la configuracion inicial (meas_conf y cap_config).
+	usleep(10000);	//lo que sigue tarda, puede ser prescindible este delay.
+	capacimeter_config(CUATROCIENTAS_Ss, medidaNIVEL);
+	usleep(8000);												//afinar este delay
 
 
     //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
@@ -717,7 +845,7 @@ void app_main(void)
 	//start gpio task
 	xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 10, NULL);
 	//start timer task
-	xTaskCreate(timer_task, "timer_task", 2048, NULL, 10, NULL);
+	xTaskCreate(timer_task, "timer_task", 4096, NULL, 10, NULL);
 
 	//install gpio isr service
 	gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
@@ -726,6 +854,22 @@ void app_main(void)
 
     // PIN INTERRUPT
 
+	//PARA DEBUG DE MEDIDAS DE CAPACIDAD:
+
+	/*
+	uint8_t sampleNumber= 0;		// de 0 a 50
+	uint32_t packetID= 0;
+	char packetID_str[11];
+
+	float capacidad[50];
+	float desviacionAceptable= 0.2;
+	uint8_t cantMuestras= 4;
+	mean_reliability estructuraResultado;
+
+	char capacidad_str[7];	//"ccc.cc\0"
+	char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
+*/
+	// DEBUG DE MEDIDAS DE CAPACIDAD
 
 	while(1){
 
@@ -735,6 +879,8 @@ void app_main(void)
 
 		gpio_set_level(GPIO_OUTPUT_IO_0, 1);
 		vTaskDelay(500/portTICK_RATE_MS);
+
+
 
 	}
 
