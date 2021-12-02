@@ -111,6 +111,8 @@ typedef struct {
 
 static xQueueHandle s_timer_queue;
 
+static xQueueHandle s_mqtt_packets_queue;
+
 
 /*
  * A simple helper function to print the raw timer counter value
@@ -230,6 +232,31 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 
 
 
+static void mqtt_send_packets_task(void* arg){
+
+	struct {
+		uint8_t packet_id;
+		float capacidad[50];
+	}packet;
+
+	while(1){
+
+		if( xQueueReceive(s_mqtt_packets_queue, &packet, 10000/portTICK_RATE_MS)== pdTRUE){
+
+			printf("\n\npaquete: %d\n", packet.packet_id);
+
+			for(int i=0; i<50; i++){
+				printf("capacidad[%d]: %.2f\n", i, packet.capacidad[i]);
+			}
+
+		}
+	}
+
+
+}
+
+
+
 
 
 
@@ -311,6 +338,15 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 	mean_reliability estructuraResultado;
 
 
+
+
+	struct {					// por donde mando los datos a la queue
+		uint8_t packet_id;
+		float capacidad[50];
+	}packet;
+
+
+
 															//Para toma de medidas.
 
 
@@ -355,12 +391,8 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
     		if( (cantMedidas-1) <sampleNumber){
 
-    			//ENVIAR
-				strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf..
-
-				//debug:
-				//strcpy(dataToPublish, "12");
-				//debug.
+    			//ENVIAR. ESTA PARTE MUEVO COMPLETA A UNA TAREA NUEVA____________________________________________________________________________________
+				strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf.
 
 				sprintf(packetID_str, "%d", packetID++);
 				strcat(dataToPublish, packetID_str);
@@ -376,7 +408,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
 				esp_mqtt_client_publish(client, topic, dataToPublish, 0, 1, 0);
 				printf("publico<<<<\n");
-				//FIN ENVIAR
+				//FIN ENVIAR. ESTA PARTE MUEVO COMPLETA A UNA TAREA NUEVA________________________________________________________________________________
 
 				sampleNumber= 0;
 
@@ -839,7 +871,9 @@ void app_main(void)
 
 
 
-
+	s_mqtt_packets_queue= xQueueCreate(ver argumentos);
+	//start mqtt from queue task
+	xTaskCreate(mqtt_send_packets_task, "mqttFromQueue_task", 2048, NULL, 10, NULL);
 	//create a queue to handle gpio event from isr
 	gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
 	//start gpio task
