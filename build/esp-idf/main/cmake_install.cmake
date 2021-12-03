@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/ABCD/Desktop/eclipse_workspace/espOlas/main
+# Install script for directory: C:/Users/ABCD/Desktop/eclipse_workspace/ESP32olas/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

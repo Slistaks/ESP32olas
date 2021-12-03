@@ -114,6 +114,16 @@ static xQueueHandle s_timer_queue;
 static xQueueHandle s_mqtt_packets_queue;
 
 
+struct capacity_packets_struct{
+	uint8_t packet_id;
+	float capacidad[50];
+	uint8_t capdac;
+};
+
+
+
+
+
 /*
  * A simple helper function to print the raw timer counter value
  * and the counter value converted to seconds
@@ -234,20 +244,43 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 
 static void mqtt_send_packets_task(void* arg){
 
-	struct {
-		uint8_t packet_id;
-		float capacidad[50];
-	}packet;
+
+	char packetID_str[11];
+	char capacidad_str[7];	//"ccc.cc\0"
+	char dataToPublish[352];
+	char topic[50];
+	sprintf(topic, "/topic/nivel/sensor_%d", NUMERO_DE_SENSOR);
+
+	struct capacity_packets_struct packet;
+
 
 	while(1){
 
 		if( xQueueReceive(s_mqtt_packets_queue, &packet, 10000/portTICK_RATE_MS)== pdTRUE){
 
-			printf("\n\npaquete: %d\n", packet.packet_id);
 
-			for(int i=0; i<50; i++){
-				printf("capacidad[%d]: %.2f\n", i, packet.capacidad[i]);
+
+			strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf.
+
+			sprintf(packetID_str, "%d", packet.packet_id);
+			strcat(dataToPublish, packetID_str);
+
+
+			for(int i=0; i<cantMedidas-1; i++){
+				strcat(dataToPublish, ",");
+				sprintf(capacidad_str, "%.2f", packet.capacidad[i]+3.125*packet.capdac);
+				strcat(dataToPublish, capacidad_str);
 			}
+
+			strcat(dataToPublish, "]");			// no me deja poner dentro de sprintf..
+			printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
+			esp_mqtt_client_publish(client, topic, dataToPublish, 0, 1, 0);
+			//printf("publico<<<<\n");
+			printf("\n\npaquete: %d enviado\n", packet.packet_id);
+
+
+
+
 
 		}
 	}
@@ -340,10 +373,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
 
-	struct {					// por donde mando los datos a la queue
-		uint8_t packet_id;
-		float capacidad[50];
-	}packet;
+	struct capacity_packets_struct packets;
 
 
 
@@ -356,11 +386,9 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
     	if(xQueueReceive(s_timer_queue, &evt, portMAX_DELAY)){
 
-    		//printf("timer interrumpio<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 
-    		//xSemaphoreTake(print_mux, portMAX_DELAY);
 
-    		//printf("Group[%d], timer[%d] alarm event\n", evt.info.timer_group, evt.info.timer_idx);
+
 
     		if(parar){
     			pararConfirmado++;
@@ -374,9 +402,11 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     		// TOMA DE MEDIDA:
 
 
+
+
     		if(sampleNumber==0){				// medida de nivel AUTORANGO la primer medida, despues medidas normales:
 				capdac= read_autoranging_cap_pF(capacidad, medidaNIVEL);
-				printf("primer medida, autoranging\ncapacidad: %0.2f\ncapdac: %d\n", capacidad[0]+capdac*3.125, capdac);
+				//printf("primer medida, autoranging\ncapacidad: %0.2f\ncapdac: %d\n", capacidad[0]+capdac*3.125, capdac);
     		}else{
     			//read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
     			read_processed_cap_pF(medidaNIVEL, desviacionAceptable, cantMuestras, &estructuraResultado);
@@ -388,9 +418,30 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
 
-
     		if( (cantMedidas-1) <sampleNumber){
 
+
+
+
+    			//__________________queue__________________________________
+
+				memcpy(packets.capacidad, capacidad, sizeof(float)*cantMedidas);
+				packets.packet_id= packetID;
+				packets.capdac= capdac;
+
+				xQueueSend(s_mqtt_packets_queue, &packets, 5/portTICK_RATE_MS);
+
+
+
+
+
+				//__________________queue__________________________________
+
+
+
+				packetID++;
+
+/*
     			//ENVIAR. ESTA PARTE MUEVO COMPLETA A UNA TAREA NUEVA____________________________________________________________________________________
 				strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf.
 
@@ -405,11 +456,11 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				}
 
 				strcat(dataToPublish, "]");			// no me deja poner dentro de sprintf..
-				printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
-				esp_mqtt_client_publish(client, topic, dataToPublish, 0, 1, 0);
-				printf("publico<<<<\n");
+				//printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
+				//esp_mqtt_client_publish(client, topic, dataToPublish, 0, 1, 0);
+				//printf("publico<<<<\n");
 				//FIN ENVIAR. ESTA PARTE MUEVO COMPLETA A UNA TAREA NUEVA________________________________________________________________________________
-
+*/
 				sampleNumber= 0;
 
 				if(pararConfirmado>=2){
@@ -421,9 +472,9 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
 
-			//xSemaphoreGive(print_mux);
+
 			//vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
-			//vTaskDelay(1/portTICK_RATE_MS);
+
 
 
 
@@ -871,9 +922,10 @@ void app_main(void)
 
 
 
-	s_mqtt_packets_queue= xQueueCreate(ver argumentos);
+	//create a queue to handle sensor packets
+	s_mqtt_packets_queue= xQueueCreate(4, sizeof(struct capacity_packets_struct));
 	//start mqtt from queue task
-	xTaskCreate(mqtt_send_packets_task, "mqttFromQueue_task", 2048, NULL, 10, NULL);
+	xTaskCreate(mqtt_send_packets_task, "mqttFromQueue_task", 4096, NULL, 10, NULL);
 	//create a queue to handle gpio event from isr
 	gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
 	//start gpio task
