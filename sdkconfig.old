@@ -180,7 +180,7 @@ CONFIG_BH1750_OPMODE=0x23
 #
 # Broker configuration
 #
-CONFIG_BROKER_URL="mqtt://mqtt.eclipse.org"
+CONFIG_BROKER_URL="mqtt://192.168.1.200"
 # end of Broker configuration
 
 #

@@ -468,10 +468,11 @@ int read_autoranging_cap_pF(float* capacidad, enum tipo_medida tipoMedida){     
 
     usleep(3000);   //tiempo mayor a un Ts. // primer medida da muy alto, no funciona. descartar primer medida? : lo de descartar la primer medida funciona.
     read_single_cap_pF(&cap, tipoMedida);  //descarto la primer muestra -> funciono. modificado del original
+    //en lugar de descartar la primer muestra, podria esperar mas ms? despues de capacimeter_config hay que esperar, hoja de datos no dice.
 
-    saltoOffset*=2; //desplazo a izda para compenzar el primer desplazamiento a dcha.
+    saltoOffset*=2; //desplazo a izda para compenzar el primer desplazamiento a dcha dentro del bucle.
 
-    while(1){     //mientras este saturado: corrige offset.
+    while(1){     //mientras este saturado: corrige offset.			// peor caso: 5 iteraciones (la 6 retorna antes de ejecutar el delay y todo eso)
 
 
         if(saltoOffset==0){
