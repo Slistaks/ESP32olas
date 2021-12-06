@@ -371,6 +371,7 @@ static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 
 static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
+	uint8_t syncTest= 0;
 	example_timer_event_t evt;
 
 	char topic[50];
@@ -525,6 +526,10 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     		if( (cantMedidas-1) <sampleNumber){
 
 
+    			//debug para testear que tan bien se sincronizan.
+				syncTest= !syncTest;
+    			gpio_set_level(GPIO_OUTPUT_IO_0, syncTest);
+				//debug para testear que tan bien se sincronizan.
 
 
     			//__________________queue__________________________________
@@ -534,11 +539,6 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				packets.capdac= capdac;
 
 				xQueueSend(s_mqtt_packets_queue, &packets, 5/portTICK_RATE_MS);
-
-
-
-
-
 				//__________________queue__________________________________
 
 
@@ -1050,10 +1050,10 @@ void app_main(void)
 
 	while(1){
 
-		gpio_set_level(GPIO_OUTPUT_IO_0, 1);
-		vTaskDelay(500/portTICK_RATE_MS);
+		//gpio_set_level(GPIO_OUTPUT_IO_0, 1);
+		//vTaskDelay(500/portTICK_RATE_MS);
 
-		gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+		//gpio_set_level(GPIO_OUTPUT_IO_0, 0);
 		vTaskDelay(500/portTICK_RATE_MS);
 
 	}
