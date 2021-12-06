@@ -256,10 +256,13 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
 static void mqtt_send_packets_task(void* arg){
 
 
-	char packetID_str[11];
+	char packetID_str[12];	//el 12avo elemento es la ',' que separa packetID y ensayoID.
+	char ensayoID_str[11];
 	char capacidad_str[7];	//"ccc.cc\0"
-	char dataToPublish[352];
+	char dataToPublish[380];	// son [363] pero por si calcule algo mal, le doy 380.
 	char topic[50];
+	uint32_t ensayoID= -1;	// Cada ensayo consta de varios paquetes sincronizados. El primer paquete de cada ensayo tiene ID=0. Arranca en -1 para compensar primer incremento.
+
 	sprintf(topic, "/topic/nivel/sensor_%d", NUMERO_DE_SENSOR);
 
 	struct capacity_packets_struct packet;
@@ -273,7 +276,14 @@ static void mqtt_send_packets_task(void* arg){
 
 			strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf.
 
-			sprintf(packetID_str, "%d", packet.packet_id);
+			if(packet.packet_id==0){
+				ensayoID++;
+			}
+
+			sprintf(ensayoID_str, "%d", ensayoID);
+			strcat(dataToPublish, ensayoID_str);
+
+			sprintf(packetID_str, ",%d", packet.packet_id);
 			strcat(dataToPublish, packetID_str);
 
 
@@ -984,9 +994,8 @@ void app_main(void)
     //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_1", 1024 * 2, (void *)1, 10, NULL);
 
 
-    // PIN INTERRUPT
 
-    // pin como salida para interrumpir por software al pin que esta como entrada:
+    // salida para ver si se sincronizan correctamente varios ESP32
     gpio_config_t io_conf;
 	//disable interrupt
 	io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -1013,6 +1022,7 @@ void app_main(void)
 	io_conf.mode = GPIO_MODE_INPUT;
 	//enable pull-up mode
 	io_conf.pull_up_en = 1;
+	io_conf.pull_down_en= 0;
 	gpio_config(&io_conf);
 
 
@@ -1035,33 +1045,13 @@ void app_main(void)
 
     // PIN INTERRUPT
 
-	//PARA DEBUG DE MEDIDAS DE CAPACIDAD:
-
-	/*
-	uint8_t sampleNumber= 0;		// de 0 a 50
-	uint32_t packetID= 0;
-	char packetID_str[11];
-
-	float capacidad[50];
-	float desviacionAceptable= 0.2;
-	uint8_t cantMuestras= 4;
-	mean_reliability estructuraResultado;
-
-	char capacidad_str[7];	//"ccc.cc\0"
-	char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
-*/
-	// DEBUG DE MEDIDAS DE CAPACIDAD
-
 	while(1){
-
-
-		gpio_set_level(GPIO_OUTPUT_IO_0, 0);
-		vTaskDelay(500/portTICK_RATE_MS);
 
 		gpio_set_level(GPIO_OUTPUT_IO_0, 1);
 		vTaskDelay(500/portTICK_RATE_MS);
 
-
+		gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+		vTaskDelay(500/portTICK_RATE_MS);
 
 	}
 
