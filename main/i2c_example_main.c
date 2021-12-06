@@ -1028,7 +1028,7 @@ void app_main(void)
 
 
 	//create a queue to handle sensor packets
-	s_mqtt_packets_queue= xQueueCreate(4, sizeof(struct capacity_packets_struct));
+	s_mqtt_packets_queue= xQueueCreate(8, sizeof(struct capacity_packets_struct));
 	//start mqtt from queue task
 	xTaskCreate(mqtt_send_packets_task, "mqttFromQueue_task", 4096, NULL, 10, NULL);
 	//create a queue to handle gpio event from isr
