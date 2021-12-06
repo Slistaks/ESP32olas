@@ -327,6 +327,7 @@ static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 
             		//no reconfiguro alarm time porque siempre uso 50ms tanto para antirebote como para enviar datos.
             		//caso que se necesite que sean tiempos distintos, agregar aca configuracion de alarm time.
+            		parar= 0;
             		timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
             		timer_enable_intr(TIMER_GROUP_0, TIMER_0);
 
