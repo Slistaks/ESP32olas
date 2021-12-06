@@ -225,7 +225,7 @@ SemaphoreHandle_t print_mux = NULL;
 esp_mqtt_client_handle_t client;
 
 uint8_t midiendo= 0;	// no necesitan semaforo, uno lee y el otro escribe y no intercambian roles (timer y gpio ISRs).
-uint8_t parar= 1;		// no necesitan semaforo, uno lee y el otro escribe y no intercambian roles (timer y gpio ISRs).
+uint8_t parar= 0;		// no necesitan semaforo, uno lee y el otro escribe y no intercambian roles (timer y gpio ISRs).
 
 
 
@@ -1043,7 +1043,10 @@ void app_main(void)
 	//hook isr handler for specific gpio pin
 	gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0);
 
-    // PIN INTERRUPT
+
+
+	timer_enable_intr(TIMER_GROUP_0, TIMER_0);
+
 
 	while(1){
 
