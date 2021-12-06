@@ -86,12 +86,20 @@ static const char *TAG = "i2c-example";
 #define ACK_VAL 0x0                             /*!< I2C ack value */
 #define NACK_VAL 0x1                            /*!< I2C nack value */
 
+
+
+
+
+#define NUMERO_DE_SENSOR 1
 #define ALARM_MS 50
 #define cantMedidas 50
-#define NUMERO_DE_SENSOR 0
 #define CAPDAC_MID_RANGE 24
 #define CAPDAC_MAX	31
 #define CAPDAC_MIN	0
+
+
+
+
 
 #define TIMER_DIVIDER         (16)  //  Hardware timer clock divider
 #define TIMER_SCALE           (( 80*1000000 ) / TIMER_DIVIDER)  // convert counter value to seconds	//lo reemplace porque no me lo tomaba al define original.
@@ -548,8 +556,9 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 */
 				sampleNumber= 0;
 
-				if(pararConfirmado>=2){
+				if(1<pararConfirmado){
 					midiendo= 0;
+					packetID= 0;
 					timer_disable_intr(TIMER_GROUP_0, TIMER_0);
 				}
 
