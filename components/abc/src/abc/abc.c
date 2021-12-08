@@ -153,6 +153,18 @@ int capacimeter_done(i2c_port_t i2c_num, enum tipo_medida tipoMedida);
 
 
 
+
+float cap_to_mm(float cap, float a, float b, float c){
+
+	return (cap==0) ? 0 : (cap*cap*a + cap*b +c);
+
+}
+
+
+
+
+
+
 int capacimeter_read(i2c_port_t i2c_num, uint8_t* rxBuffer_p, uint8_t* txBuffer_p, enum reg_resultado reg){         // Parametro es el reg a leer
 
 
@@ -370,7 +382,7 @@ int MEASn_capdac_config(int capdac_offset, enum tipo_medida tipoMedida){
 
         case medidaNIVEL:
             capdac_offset_g1= capdac_offset;
-            pinCIN= pinCIN1;
+            pinCIN= pinCIN2;					// para la placa modifique este, que es el que tiene el cap en serie en el pcb.
             regDIR_CONF_MEASn= regDIR_CONF_MEAS1;
             break;
 

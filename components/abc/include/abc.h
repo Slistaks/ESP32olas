@@ -86,6 +86,28 @@ typedef struct mean_reliability_struct {
 
 
 
+
+
+
+
+
+//
+// Convierte capacidad a milimetros, d[mm]= a*cap^2 + b*cap + c
+//
+//
+float cap_to_mm(float cap, float a, float b, float c);
+
+
+
+
+
+
+
+
+
+
+
+
 // capacimeter_init: Inicializa y configura el integrado fdc1004.
 //
 // Parametros:

@@ -90,7 +90,7 @@ static const char *TAG = "i2c-example";
 
 
 
-#define NUMERO_DE_SENSOR 1
+#define NUMERO_DE_SENSOR 3
 #define ALARM_MS 50
 #define cantMedidas 50
 #define CAPDAC_MID_RANGE 24
