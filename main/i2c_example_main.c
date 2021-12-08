@@ -90,12 +90,20 @@ static const char *TAG = "i2c-example";
 
 
 
-#define NUMERO_DE_SENSOR 3
-#define ALARM_MS 50
-#define cantMedidas 50
-#define CAPDAC_MID_RANGE 24
-#define CAPDAC_MAX	31
-#define CAPDAC_MIN	0
+#define NUMERO_DE_SENSOR 	0
+#define ALARM_MS 			50
+#define cantMedidas 		50
+#define CAPDAC_MID_RANGE 	24
+#define CAPDAC_MAX			31
+#define CAPDAC_MIN			0
+
+
+#define SECOND_ORDER_COEF_A 0.0337
+#define SECOND_ORDER_COEF_B 2.55
+#define SECOND_ORDER_COEF_C -86.4
+
+
+
 
 
 
@@ -127,7 +135,7 @@ static xQueueHandle s_mqtt_packets_queue;
 
 struct capacity_packets_struct{
 	uint32_t packet_id;
-	float capacidad[50];
+	int heigh[50];
 	uint8_t capdac;
 };
 
@@ -258,7 +266,7 @@ static void mqtt_send_packets_task(void* arg){
 
 	char packetID_str[12];	//el 12avo elemento es la ',' que separa packetID y ensayoID.
 	char ensayoID_str[11];
-	char capacidad_str[7];	//"ccc.cc\0"
+	char heigh_str[5];	//"+hhh\0"
 	char dataToPublish[380];	// son [363] pero por si calcule algo mal, le doy 380.
 	char topic[50];
 	uint32_t ensayoID= -1;	// Cada ensayo consta de varios paquetes sincronizados. El primer paquete de cada ensayo tiene ID=0. Arranca en -1 para compensar primer incremento.
@@ -287,10 +295,10 @@ static void mqtt_send_packets_task(void* arg){
 			strcat(dataToPublish, packetID_str);
 
 
-			for(int i=0; i<cantMedidas-1; i++){
+			for(int i=0; i<cantMedidas; i++){
 				strcat(dataToPublish, ",");
-				sprintf(capacidad_str, "%.2f", packet.capacidad[i]+3.125*packet.capdac);
-				strcat(dataToPublish, capacidad_str);
+				sprintf(heigh_str, "%d", packet.heigh[i]);
+				strcat(dataToPublish, heigh_str);
 			}
 
 			strcat(dataToPublish, "]");			// no me deja poner dentro de sprintf..
@@ -386,6 +394,8 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 	//char capacidad_str[7];	//"ccc.cc\0"
 	//char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
 
+
+	//float cap_temp;
 	float capacidad[50];
 
 
@@ -450,7 +460,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
     		capdac= CAPDAC_MID_RANGE;
     		MEASn_capdac_config(capdac, medidaNIVEL);
-    		usleep(7000);		// si este delay es menor a 6ms no alcanza para configurar el offset, y usa el offset anterior al configurado en la linea anterior.
+    		usleep(8000);		// si este delay es menor a 6ms no alcanza para configurar el offset, y usa el offset anterior al configurado en la linea anterior.
     		read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
 
     		if(capacidad[sampleNumber]<-14.1){
@@ -472,9 +482,11 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
     			MEASn_capdac_config(capdac, medidaNIVEL);
-    			usleep(7000);	// si falla aumentar este delay
+    			usleep(8000);	// si falla aumentar este delay
     			read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
-    			//printf("la nueva medida es: C: %f _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber]);
+    			capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac;
+
+    			printf("la nueva medida en L es: C: %f, capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
 
     		}else if(14.1<capacidad[sampleNumber]){
 
@@ -495,21 +507,33 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
 				MEASn_capdac_config(capdac, medidaNIVEL);
-				usleep(7000);	// si falla aumentar este delay
+				usleep(8000);	// si falla aumentar este delay
 				read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
-				//printf("la nueva medida es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
+				capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac;
+
+				printf("la nueva medida en H es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
+
+
+
+
+
+
 
     		}else{
+
+    			capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac;
+
     			//printf("s: %d rango medio-----------------       C: %f\n", sampleNumber, capacidad[sampleNumber]);
     			//debug:
 				if(rango!='M'){
 					rango='M';
 					printf("cambio de rango a M, C: %.2f con capdac: %d\n", capacidad[sampleNumber], capdac);
+					printf("la nueva medida en M es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
 				}
 
 				//fin debug.
     		}
-
+    		//printf("CAPACIDAD ABSOLUTA: %f##########################################\n", capacidad[sampleNumber]+capdac*3.125);
     		//FIN DE BLOQUE DE 3 RANGOS DE 28.125pF________________________________
 
 
@@ -532,9 +556,16 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				//debug para testear que tan bien se sincronizan.
 
 
+    			printf("\n\n");
+    			for(int j=0; j<50; j++){
+    				packets.heigh[j]= cap_to_mm(capacidad[j], SECOND_ORDER_COEF_A, SECOND_ORDER_COEF_B, SECOND_ORDER_COEF_C);
+    				printf("|%.2f|", capacidad[j]+3.125*capdac);
+    			}
+    			printf("\n\n");
+
+
     			//__________________queue__________________________________
 
-				memcpy(packets.capacidad, capacidad, sizeof(float)*cantMedidas);
 				packets.packet_id= packetID;
 				packets.capdac= capdac;
 

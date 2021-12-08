@@ -154,9 +154,15 @@ int capacimeter_done(i2c_port_t i2c_num, enum tipo_medida tipoMedida);
 
 
 
-float cap_to_mm(float cap, float a, float b, float c){
+int cap_to_mm(float cap, float a, float b, float c){
 
-	return (cap==0) ? 0 : (cap*cap*a + cap*b +c);
+	int altura= (int)(cap*cap*a + cap*b +c);
+
+	if(999<altura){		// Altura maxima 1 metro
+		return 999;
+	}
+
+	return altura;
 
 }
 
