@@ -93,7 +93,7 @@ static const char *TAG = "i2c-example";
 #define NUMERO_DE_SENSOR 	0
 #define ALARM_MS 			50
 #define cantMedidas 		50
-#define CAPDAC_MID_RANGE 	24
+#define CAPDAC_MID_RANGE 	23
 #define CAPDAC_MAX			31
 #define CAPDAC_MIN			0
 
@@ -463,7 +463,8 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     		usleep(8000);		// si este delay es menor a 6ms no alcanza para configurar el offset, y usa el offset anterior al configurado en la linea anterior.
     		read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
 
-    		if(capacidad[sampleNumber]<-14.1){
+
+    		if(capacidad[sampleNumber]<-12.1){
 
     			//printf("s: %d cambio al rango inferior vvvv     saturo con C: %f\n", sampleNumber, capacidad[sampleNumber]);		//debug
 
@@ -475,20 +476,22 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			//fin debug.
 
 
-    			capdac= CAPDAC_MID_RANGE-9;		// lo empaqueta abajo, hay que actualizarlo.
+    			capdac= CAPDAC_MID_RANGE-6;		// lo empaqueta abajo, hay que actualizarlo.						//cambie de 9 a 8 por debug volver a 9.
     			if(capdac<CAPDAC_MIN){
+    				printf("CAPDAC MENOR AL MINIMO CAPDAC.<<<<<<<<<<<<<<<<<<\n");
     				capdac= CAPDAC_MIN;
     			}
 
-
+    			//printf("saturo con: %.2f y capdac: %d\n", capacidad[sampleNumber], capdac+9);
     			MEASn_capdac_config(capdac, medidaNIVEL);
-    			usleep(8000);	// si falla aumentar este delay
+    			usleep(8000);	// si falla aumentar este delay														//alargue el delay por debug. volver a 8ms
     			read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
-    			capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac;
 
-    			printf("la nueva medida en L es: C: %f, capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
+    			capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac-1.48;
 
-    		}else if(14.1<capacidad[sampleNumber]){
+    			//printf("la nueva medida en L es: C: %f, capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
+
+    		}else if(12.1<capacidad[sampleNumber]){
 
     			//printf("s: %d cambio al rango superior ^^^^     saturo con C: %f\n", sampleNumber, capacidad[sampleNumber]);		//debug
 
@@ -500,7 +503,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				//fin debug.
 
 
-				capdac= CAPDAC_MID_RANGE+9;		// lo empaqueta abajo, hay que actualizarlo.
+				capdac= CAPDAC_MID_RANGE+6;		// lo empaqueta abajo, hay que actualizarlo.
 				if( CAPDAC_MAX < capdac ){
 					capdac= CAPDAC_MAX;
 				}
@@ -511,7 +514,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
 				capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac;
 
-				printf("la nueva medida en H es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
+				//printf("la nueva medida en H es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
 
 
 
@@ -527,7 +530,6 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			//debug:
 				if(rango!='M'){
 					rango='M';
-					printf("cambio de rango a M, C: %.2f con capdac: %d\n", capacidad[sampleNumber], capdac);
 					printf("la nueva medida en M es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
 				}
 
@@ -559,7 +561,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			printf("\n\n");
     			for(int j=0; j<50; j++){
     				packets.heigh[j]= cap_to_mm(capacidad[j], SECOND_ORDER_COEF_A, SECOND_ORDER_COEF_B, SECOND_ORDER_COEF_C);
-    				printf("|%.2f|", capacidad[j]+3.125*capdac);
+    				printf(",%.2f", capacidad[j]);
     			}
     			printf("\n\n");
 
