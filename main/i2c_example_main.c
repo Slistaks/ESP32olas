@@ -90,6 +90,12 @@ static const char *TAG = "i2c-example";
 
 
 
+
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
+
 #define NUMERO_DE_SENSOR 	0
 #define ALARM_MS 			50
 #define cantMedidas 		50
@@ -98,13 +104,20 @@ static const char *TAG = "i2c-example";
 #define CAPDAC_MIN			0
 
 
-#define SECOND_ORDER_COEF_A 0.0337
-#define SECOND_ORDER_COEF_B 2.55
-#define SECOND_ORDER_COEF_C -86.4
+#define SECOND_ORDER_COEF_A -0.0146
+#define SECOND_ORDER_COEF_B 2.05
+#define SECOND_ORDER_COEF_C 23.6
+
+
+#define UPPER_RANGE_CORRECTION_OFFSET 0 //1.91
+#define LOWER_RANGE_CORRECTION_OFFSET_FALLING_LVL 0.5
 
 
 
-
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA.
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA.
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA.
+//_______________________________________ PARAMETROS GLOBALES MODICAR ACA.
 
 
 
@@ -407,7 +420,9 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 	struct capacity_packets_struct packets;
 
 
-	static unsigned char rango='M';	// para debug. borrar despues
+	static unsigned char rango= 'M';	// para debug. borrar despues
+	//unsigned char rangoAnterior= 'M';
+	//int8_t rangoLPF= 0;
 
 															//Para toma de medidas.
 
@@ -487,7 +502,12 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			usleep(8000);	// si falla aumentar este delay														//alargue el delay por debug. volver a 8ms
     			read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
 
-    			capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac-1.48;
+    			//if(rangoAnterior=='M')
+    				capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac+LOWER_RANGE_CORRECTION_OFFSET_FALLING_LVL;
+    			//else
+    				//capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac+LOWER_RANGE_CORRECTION_OFFSET_RISING_LVL;
+
+    			//rangoAnterior= 'L';
 
     			//printf("la nueva medida en L es: C: %f, capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
 
@@ -498,6 +518,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			//debug:
 				if(rango!='H'){
 					rango='H';
+
 					printf("cambio de rango a H, cap saturo en C: %.2f con capdac: %d\n", capacidad[sampleNumber], capdac);
 				}
 				//fin debug.
@@ -512,7 +533,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				MEASn_capdac_config(capdac, medidaNIVEL);
 				usleep(8000);	// si falla aumentar este delay
 				read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
-				capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac;
+				capacidad[sampleNumber]= capacidad[sampleNumber]+3.125*capdac+UPPER_RANGE_CORRECTION_OFFSET;
 
 				//printf("la nueva medida en H es: C: %.2f con capdac: %d _-_-_-_-_-_-_-_-_-_-_-_-\n", capacidad[sampleNumber], capdac);
 
