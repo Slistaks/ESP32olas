@@ -104,6 +104,18 @@ static const char *TAG = "i2c-example";
 #define CAPDAC_MIN			0
 
 
+#define CAPDAC_DEFAULT		31
+
+
+#define SAMPLE_RATE_DEFAULT 	CUATROCIENTAS_Ss
+#define N_MUESTRAS_MEDIA		16
+#define DELAY_ENTREMUESTRAS_US	2707
+
+
+
+
+
+
 #define SECOND_ORDER_COEF_A -0.0146
 #define SECOND_ORDER_COEF_B 2.05
 #define SECOND_ORDER_COEF_C 23.6
@@ -160,12 +172,14 @@ struct capacity_packets_struct{
  * A simple helper function to print the raw timer counter value
  * and the counter value converted to seconds
  */
+/*
 static void inline print_timer_counter(uint64_t counter_value)
 {
     printf("Counter: 0x%08x%08x\r\n", (uint32_t) (counter_value >> 32),
            (uint32_t) (counter_value));
     printf("Time   : %.8f s\r\n", (double) counter_value / TIMER_SCALE);
 }
+*/
 
 static bool IRAM_ATTR timer_group_isr_callback(void *args)
 {
@@ -426,7 +440,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 															//Para toma de medidas.
 
-
+	float acc;				// temporal que uso para hacer una media
 
 
     for(;;) {
@@ -444,6 +458,62 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     		}
 
     		midiendo= 1;
+
+
+
+
+
+
+    		//BLOQUE QUE TOMA UNA SOLA MEDIDA CON CAPDAC FIJO:
+			//read_single_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
+			//capacidad[sampleNumber] = capacidad[sampleNumber]+3.125*CAPDAC_DEFAULT;
+			//FIN BLOQUE QUE TOMA UNA SOLA MEDIDA CON CAPDAC FIJO
+
+
+
+
+
+
+
+
+
+			//BLOQUE MEDIA DE n MEDIDAS:
+			capacidad[sampleNumber] = 0;
+			for (int i = 0; i < N_MUESTRAS_MEDIA; i++) {														//
+				read_single_cap_pF(&acc, medidaNIVEL);
+				capacidad[sampleNumber] += acc;
+				usleep(DELAY_ENTREMUESTRAS_US);								//11ms para 100Ss					//
+			}
+			capacidad[sampleNumber] /= N_MUESTRAS_MEDIA;														//
+			capacidad[sampleNumber] = capacidad[sampleNumber] + 3.125 * CAPDAC_DEFAULT;
+			//MEDIA DE n MEDIDAS
+
+
+
+
+
+
+
+
+
+
+
+			//BLOQUE QUE HACE MEDIA MOVIL
+
+
+
+			//BLOQUE QUE HACE MEDIA MOVIL
+
+
+
+
+
+
+
+
+
+
+
 
 
     		// TOMA DE MEDIDA:
@@ -470,7 +540,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
 
-
+    		/*
     		//BLOQUE DE 3 RANGOS DE 28.125pF:______________________________________
 
     		capdac= CAPDAC_MID_RANGE;
@@ -558,7 +628,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     		}
     		//printf("CAPACIDAD ABSOLUTA: %f##########################################\n", capacidad[sampleNumber]+capdac*3.125);
     		//FIN DE BLOQUE DE 3 RANGOS DE 28.125pF________________________________
-
+    		*/
 
 
     		//printf("capdac: %d, Coffset: %f\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n", capdac, capdac*3.125);
@@ -1006,7 +1076,6 @@ void app_main(void)
 
 
 
-
     //timer
     s_timer_queue = xQueueCreate(10, sizeof(example_timer_event_t));
     example_tg_timer_init(TIMER_GROUP_0, TIMER_0, true, ALARM_MS);
@@ -1037,6 +1106,7 @@ void app_main(void)
     //mqtt
 
 
+	/*
     ESP_ERROR_CHECK(i2c_master_init());
     capacimeter_init(I2C_MASTER_NUM, 0, CUATROCIENTAS_Ss);		// antes abria el puerto, ahora unicamente ejecuta la configuracion inicial (meas_conf y cap_config).
 	usleep(10000);	//lo que sigue tarda, puede ser prescindible este delay.
@@ -1046,6 +1116,31 @@ void app_main(void)
 
     //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
     //xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_1", 1024 * 2, (void *)1, 10, NULL);
+	*/
+
+
+
+	ESP_ERROR_CHECK(i2c_master_init());
+	capacimeter_init(I2C_MASTER_NUM, 0, SAMPLE_RATE_DEFAULT);// antes abria el puerto, ahora unicamente ejecuta la configuracion inicial (meas_conf y cap_config).
+	usleep(10000);	//lo que sigue tarda, puede ser prescindible este delay.
+	capacimeter_config(SAMPLE_RATE_DEFAULT, medidaNIVEL);
+	usleep(8000);											//afinar este delay
+	MEASn_capdac_config(CAPDAC_DEFAULT, medidaNIVEL);
+	usleep(8000);// si este delay es menor a 6ms no alcanza para configurar el offset, y usa el offset anterior al configurado en la linea anterior.
+
+	float descartada;
+	read_single_cap_pF(&descartada, medidaNIVEL);	// descarto la primer muestra
+	usleep(8000);
+	//xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
+	//xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_1", 1024 * 2, (void *)1, 10, NULL);
+
+
+
+
+
+
+
+
 
 
 
