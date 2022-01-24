@@ -113,6 +113,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("C:/Users/ABCD/Desktop/2022_workspace/ESP32olas/build/esp-idf/wifi_provisioning/cmake_install.cmake")
   include("C:/Users/ABCD/Desktop/2022_workspace/ESP32olas/build/esp-idf/protocol_examples_common/cmake_install.cmake")
   include("C:/Users/ABCD/Desktop/2022_workspace/ESP32olas/build/esp-idf/abc/cmake_install.cmake")
+  include("C:/Users/ABCD/Desktop/2022_workspace/ESP32olas/build/esp-idf/filter/cmake_install.cmake")
   include("C:/Users/ABCD/Desktop/2022_workspace/ESP32olas/build/esp-idf/main/cmake_install.cmake")
 
 endif()

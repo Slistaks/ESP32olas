@@ -47,6 +47,7 @@
 
 #include "sdkconfig.h"
 #include "abc.h"
+#include "filter.h"
 //#include "components/bib/include/abc.h"
 
 
@@ -91,6 +92,48 @@ static const char *TAG = "i2c-example";
 
 
 
+
+
+
+
+// BORRAR UNA VEZ PROBADO EL FILTRO
+static int sine_1hz[]={		//400 muestras
+		50,51,52,52,53,54,55,55,56,57,58,59,59,60,61,62,62,63,64,65,65,66,67,68,68,69,70,71,71,72,73,73,74,75,75,76,77,77,78,79,79,80,81,81,82,82,83,84,84,85,
+		85,86,86,87,88,88,89,89,90,90,90,91,91,92,92,93,93,93,94,94,95,95,95,96,96,96,96,97,97,97,98,98,98,98,98,99,99,99,99,99,99,100,100,100,100,100,100,100,100,100,
+		100,100,100,100,100,100,100,100,100,100,99,99,99,99,99,99,98,98,98,98,98,97,97,97,96,96,96,96,95,95,95,94,94,93,93,93,92,92,91,91,90,90,90,89,89,88,88,87,86,86,
+		85,85,84,84,83,82,82,81,81,80,79,79,78,77,77,76,75,75,74,73,73,72,71,71,70,69,68,68,67,66,65,65,64,63,62,62,61,60,59,59,58,57,56,55,55,54,53,52,52,51,
+		50,49,48,48,47,46,45,45,44,43,42,41,41,40,39,38,38,37,36,35,35,34,33,32,32,31,30,29,29,28,27,27,26,25,25,24,23,23,22,21,21,20,19,19,18,18,17,16,16,15,
+		15,14,14,13,12,12,11,11,10,10,10,9,9,8,8,7,7,7,6,6,5,5,5,4,4,4,4,3,3,3,2,2,2,2,2,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,3,3,3,4,4,4,4,5,5,5,6,6,7,7,7,8,8,9,9,10,10,10,11,11,12,12,13,14,14,
+		15,15,16,16,17,18,18,19,19,20,21,21,22,23,23,24,25,25,26,27,27,28,29,29,30,31,32,32,33,34,35,35,36,37,38,38,39,40,41,41,42,43,44,45,45,46,47,48,48,49
+};
+
+static int sine_10hz[]={	//40 muestras
+		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
+		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
+		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
+		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
+		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42
+};
+
+
+static float white_noise[]={		//400 muestras
+		88.575,10.408,37.955,57.140,31.841,20.965,21.667,64.309,99.926,3.5499,43.019,7.8124,79.278,27.939,57.116,75.213,22.113,65.254,16.076,8.1166,3.0759,43.070,24.105,80.496,15.947,49.400,95.678,87.362,78.746,40.840,17.861,67.239,50.934,57.362,38.877,17.981,39.808,16.137,13.672,81.005,24.490,97.557,94.521,75.836,73.565,22.729,8.9984,42.409,97.624,6.3154,87.362,1.4208,30.019,60.418,93.137,27.129,63.878,62.188,80.362,33.658,80.823,12.703,37.285,81.613,62.810,25.731,48.675,5.9440,45.738,32.804,8.3251,11.979,37.330,5.5243,74.866,73.659,10.108,31.902,13.848,35.967,27.677,17.701,13.662,93.389,23.283,74.963,38.819,56.730,85.392,97.306,2.5826,99.695,8.8717,44.407,23.598,21.248,60.897,15.218,14.718,42.170,44.550,33.737,22.679,77.613,25.951,53.211,14.929,22.802,61.997,91.333,29.369,90.834,34.218,47.636,35.379,75.189,11.325,13.210,74.411,94.535,99.839,35.851,63.577,22.299,63.501,41.273,26.767,75.605,99.404,76.708,14.970,1.5988,21.201,91.755,37.012,39.004,39.320,69.907,38.083,78.475,80.959,11.803,79.435,57.116,72.626,94.428,59.542,44.593,42.196,82.054,50.417,81.156,53.188,69.507,45.590,63.590,4.7133,73.881,88.213,46.563,14.911,17.364,9.0941,50.246,30.795,49.537,35.847,1.8161,38.012,73.669,25.193,91.896,8.5427,42.729,59.756,14.042,48.924,86.639,27.354,96.496,17.810,13.231,57.477,30.812,60.242,79.383,20.634,60.940,18.771,51.859,13.842,45.291,6.3998,59.666,43.880,66.007,92.257,1.6090,13.952,76.366,81.144,80.411,95.868,31.888,1.6832,12.435,51.023,55.645,87.195,38.405,60.329,25.815,9.4878,98.955,66.827,47.441,97.784,65.808,39.135,26.610,74.806,71.501,19.016,37.744,77.881,95.349,56.856,58.646,77.805,99.039,93.810,99.791,0.6966,38.416,33.960,93.333,20.246,84.506,94.615,49.127,78.518,97.681,64.436,50.925,93.629,50.829,83.602,56.851,69.686,78.853,37.819,25.895,25.785,86.631,79.122,55.487,54.997,9.1819,73.612,61.818,38.290,63.265,42.359,99.217,9.5204,34.948,43.560,97.362,46.973,92.761,99.990,87.867,65.932,97.132,50.650,50.948,34.006,56.030,6.4147,91.597,97.240,15.102,86.223,14.105,58.547,23.002,83.556,54.832,53.833,44.393,33.281,82.568,59.916,46.118,8.2435,77.434,74.258,5.1836,76.003,1.4758,51.825,49.715,44.504,15.601,91.299,79.157,57.055,87.038,2.9877,29.061,47.504,42.306,80.996,0.5155,51.708,99.611,76.853,82.421,24.734,2.6505,96.264,40.951,59.417,14.031,65.749,24.929,52.986,26.219,62.011,49.800,60.630,82.675,5.8311,0.6103,33.373,25.744,77.181,94.822,59.901,76.407,57.761,57.903,27.194,45.684,64.521,81.110,24.862,43.031,11.197,15.613,94.945,76.112,81.657,72.057,91.929,63.439,72.635,13.473,9.9516,18.790,94.014,73.272,66.343,35.277,49.395,26.821,72.086,40.292,79.951,88.867,25.815,48.702,68.315,41.256,10.058,4.9458,36.270,2.5951,51.826,57.891,25.070,2.2277,1.8383,46.532,92.945,48.679,59.323,39.960,97.101,97.050,28.066,38.088,34.888,69.934,61.388,83.118,15.408,91.718,50.827,57.323
+};
+// BORRAR UNA VEZ PROBADO EL FILTRO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
@@ -107,8 +150,8 @@ static const char *TAG = "i2c-example";
 #define CAPDAC_DEFAULT		31
 
 
-#define SAMPLE_RATE_DEFAULT 	CUATROCIENTAS_Ss
-#define N_MUESTRAS_MEDIA		16
+#define SAMPLE_RATE_DEFAULT 	CUATROCIENTAS_Ss //CUATROCIENTAS_Ss
+#define N_MUESTRAS_MEDIA		8
 #define DELAY_ENTREMUESTRAS_US	2707
 
 
@@ -255,7 +298,7 @@ static void example_tg_timer_init(int group, int timer, bool auto_reload, int ti
 
 
 
-SemaphoreHandle_t print_mux = NULL;
+SemaphoreHandle_t ultimaMedida_mux = NULL;
 
 esp_mqtt_client_handle_t client;
 
@@ -332,7 +375,7 @@ static void mqtt_send_packets_task(void* arg){
 			//printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
 			esp_mqtt_client_publish(client, topic, dataToPublish, 0, 1, 0);
 			//printf("publico<<<<\n");
-			printf("\n\npaquete: %d enviado\n", packet.packet_id);
+			//printf("\n\npaquete: %d enviado\n", packet.packet_id);														//COMENTADO POR DEBUG, NUMERO DE PAQUETE ENVIADO
 
 
 
@@ -360,7 +403,7 @@ static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 
 
         	gpio_level= gpio_get_level(io_num);
-            printf("GPIO[%d] intr, val: %d\n", io_num, gpio_level);
+            //printf("GPIO[%d] intr, val: %d\n", io_num, gpio_level);
 
 
 
@@ -403,6 +446,8 @@ static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 
 
 
+SampleFilter signalFilter_struct;
+float last_filtered_cap;
 
 static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
@@ -440,7 +485,7 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 															//Para toma de medidas.
 
-	float acc;				// temporal que uso para hacer una media
+	float temp;				// temporal que uso para hacer una media movil
 
 
     for(;;) {
@@ -475,18 +520,45 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
 
 
+    		//BLOQUE MEDIA DE n MEDIDAS:
+    		/*
+    		capacidad[sampleNumber] = 0;
+    		for (int i = 0; i < N_MUESTRAS_MEDIA; i++) {														//
+    			read_single_cap_pF(&temp, medidaNIVEL);
+    			capacidad[sampleNumber] += temp;
+    			usleep(DELAY_ENTREMUESTRAS_US);								//11ms para 100Ss					//
+    		}
+    		capacidad[sampleNumber] /= N_MUESTRAS_MEDIA;														//
+    		capacidad[sampleNumber] = capacidad[sampleNumber] + 3.125 * CAPDAC_DEFAULT;
+			*/
+    		//MEDIA DE n MEDIDAS
 
 
-			//BLOQUE MEDIA DE n MEDIDAS:
-			capacidad[sampleNumber] = 0;
-			for (int i = 0; i < N_MUESTRAS_MEDIA; i++) {														//
-				read_single_cap_pF(&acc, medidaNIVEL);
-				capacidad[sampleNumber] += acc;
-				usleep(DELAY_ENTREMUESTRAS_US);								//11ms para 100Ss					//
-			}
-			capacidad[sampleNumber] /= N_MUESTRAS_MEDIA;														//
-			capacidad[sampleNumber] = capacidad[sampleNumber] + 3.125 * CAPDAC_DEFAULT;
-			//MEDIA DE n MEDIDAS
+
+
+    		//BLOQUE QUE FILTRA CON FIR
+
+    		//SampleFilter_put(&signalFilter_struct, capacidad[sampleNumber]);
+    		//capacidad[sampleNumber]= SampleFilter_get(&signalFilter_struct);
+
+    		//BLOQUE QUE FILTRA CON FIR
+
+
+
+
+
+
+    		//PARA TENER UN MUESTREO UNIFORME Y DE 400Ss, SE MIDE Y SE FILTRA EN UNA TAREA DISTINTA.
+
+    		xSemaphoreTake(ultimaMedida_mux, portMAX_DELAY);
+    		capacidad[sampleNumber]= last_filtered_cap;
+    		xSemaphoreGive(ultimaMedida_mux);
+
+    		//FIN BLOQUE QUE LEE CAPACIDAD FILTRADA OBTENIDA DE OTRA TAREA.
+
+
+
+
 
 
 
@@ -649,12 +721,12 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 				//debug para testear que tan bien se sincronizan.
 
 
-    			printf("\n\n");
+    			//printf("\n\n");																											// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
     			for(int j=0; j<50; j++){
     				packets.heigh[j]= cap_to_mm(capacidad[j], SECOND_ORDER_COEF_A, SECOND_ORDER_COEF_B, SECOND_ORDER_COEF_C);
-    				printf(",%.2f", capacidad[j]);
+    				//printf(",%.2f", capacidad[j]);																						// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
     			}
-    			printf("\n\n");
+    			//printf("\n\n");																											// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
 
 
     			//__________________queue__________________________________
@@ -966,104 +1038,32 @@ static esp_err_t i2c_master_init(void)				// la pase dentro de capacimeter_confi
 
 
 
-/*
+
 static void vLevelMeasureTask(void *arg)
 {
 
-    uint32_t task_idx = (uint32_t)arg;
-
-
-
-    uint8_t capdac= 0;
-    uint8_t sampleNumber= 0;		// de 0 a 50
-    uint32_t packetID= 0;
-    char packetID_str[11];
-
-    float capacidad[50];
-    float desviacionAceptable= 0.2;
-    uint8_t cantMuestras= 4;
-    //mean_reliability estructuraResultado;
-
-    char capacidad_str[7];	//"ccc.cc\0"
-    char dataToPublish[352];						// el formato a enviar: "[ccc.cc,ccc.cc,...,...]\0" -> 50 medidas -> 349+3 = 352.
-
-
-    capacimeter_init(I2C_MASTER_NUM, capdac, CUATROCIENTAS_Ss);		// antes abria el puerto, ahora unicamente ejecuta la configuracion inicial (meas_conf y cap_config).
-    usleep(50000);
-
+    //uint32_t task_idx = (uint32_t)arg;
+    float cap;
 
     while (1) {
 
-        //ESP_LOGI(TAG,"");
-    	//ESP_LOGE(TAG, "I2C Timeout");
-    	//ESP_LOGW(TAG, "%s", esp_err_to_name(ret));
+    	read_single_cap_pF(&cap, medidaNIVEL);
+    	cap= cap+3.125*CAPDAC_DEFAULT;
 
-        //xSemaphoreTake(print_mux, portMAX_DELAY);
+       SampleFilter_put(&signalFilter_struct, cap);
 
+       xSemaphoreTake(ultimaMedida_mux, portMAX_DELAY);
+       last_filtered_cap= (float)SampleFilter_get(&signalFilter_struct);
+       xSemaphoreGive(ultimaMedida_mux);
 
-
-        // medida de nivel MEDIA DE VARIAS
-        //capacimeter_config(etc);
-        //read_processed_cap_pF(medidaNIVEL, desviacionAceptable, cantMuestras, &estructuraResultado);
-        //printf("media: %0.2f\nconfiabilidad: %0.2f\n", estructuraResultado.mean+3.125*capdac, estructuraResultado.reliability);
-
-
-        // medida de nivel AUTORANGO:
-        capacimeter_config(CUATROCIENTAS_Ss, medidaNIVEL);
-        usleep(8000);
-        capdac= read_autoranging_cap_pF(&capacidad[sampleNumber], medidaNIVEL);
-        //printf("medida %d\ncapacidad: %0.2f\ncapdac: %d\n", sampleNumber, capacidad[sampleNumber]+capdac*3.125, capdac);
-
-
-        // medida diferencial MEDIDA UNICA:
-        //capacimeter_config(CUATROCIENTAS_Ss, medidaDIFERENCIAL);
-        //usleep(8000);
-        //read_single_cap_pF(&capacidad, medidaDIFERENCIAL);
-        //printf("capacidad diferencial: %0.2f<<<<<<<<\n", capacidad);
-
-
-
-
-
-
-		sampleNumber++;
-
-		if(49<sampleNumber){
-
-			strcpy(dataToPublish, "[");			// no me deja poner dentro de sprintf..
-			sprintf(packetID_str, "%d", packetID++);
-			strcat(dataToPublish, packetID_str);
-
-			for(int i=0; i<sampleNumber; i++){
-				strcat(dataToPublish, ",");
-				sprintf(capacidad_str, "%.2f", capacidad[i]+3.125*capdac);
-				strcat(dataToPublish, capacidad_str);
-			}
-
-			strcat(dataToPublish, "]");			// no me deja poner dentro de sprintf..
-			printf("####################\ndatos a publicar: %s\n######################\n", dataToPublish);
-			esp_mqtt_client_publish(client, "/topic/nivel/sensor_n", dataToPublish, 0, 1, 0);
-			sampleNumber= 0;
-
-		}
-
-
-
-
-
-        //xSemaphoreGive(print_mux);
-        //vTaskDelay((DELAY_TIME_BETWEEN_ITEMS_MS * (task_idx + 1)) / portTICK_RATE_MS);
-        vTaskDelay(20/portTICK_RATE_MS);
+        usleep(DELAY_ENTREMUESTRAS_US);
     }
 
-
-
-
-    vSemaphoreDelete(print_mux);
+    vSemaphoreDelete(ultimaMedida_mux);
     vTaskDelete(NULL);
 
 }
-*/
+
 
 
 
@@ -1071,10 +1071,10 @@ static void vLevelMeasureTask(void *arg)
 
 void app_main(void)
 {
-    print_mux = xSemaphoreCreateMutex();
+    ultimaMedida_mux = xSemaphoreCreateMutex();
 
 
-
+    SampleFilter_init(&signalFilter_struct);
 
     //timer
     s_timer_queue = xQueueCreate(10, sizeof(example_timer_event_t));
@@ -1131,7 +1131,7 @@ void app_main(void)
 	float descartada;
 	read_single_cap_pF(&descartada, medidaNIVEL);	// descarto la primer muestra
 	usleep(8000);
-	//xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
+	xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_0", 1024 * 8, (void *)0, 10, NULL);
 	//xTaskCreate(vLevelMeasureTask, "vLevelMeasureTask_1", 1024 * 2, (void *)1, 10, NULL);
 
 
@@ -1197,12 +1197,36 @@ void app_main(void)
 	timer_enable_intr(TIMER_GROUP_0, TIMER_0);
 
 
+
+	float filter_output;
+	float filter_output_previo;
+
+	SampleFilter filtroPrueba;
+	SampleFilter_init(&filtroPrueba);
+
 	while(1){
 
-		//gpio_set_level(GPIO_OUTPUT_IO_0, 1);
-		//vTaskDelay(500/portTICK_RATE_MS);
 
-		//gpio_set_level(GPIO_OUTPUT_IO_0, 0);
+		//PRUEBA DE FILTRO:
+
+		for(int m=1; m<400; m++){
+			//SampleFilter_put(&filtroPrueba, white_noise[i]);
+			SampleFilter_put(&filtroPrueba, white_noise[m]);
+			filter_output= (float)SampleFilter_get(&filtroPrueba);
+			//printf("%.2f,", filter_output);
+			ESP_LOGI("DEBUG..","%.2f,", filter_output);
+
+
+
+		}
+		//printf("\n\n");
+		ESP_LOGI("DEBUG..", "\n\n\n\n");
+
+		//FIN PRUEBA DE FILTRO.
+
+
+
+
 		vTaskDelay(500/portTICK_RATE_MS);
 
 	}
