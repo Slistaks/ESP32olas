@@ -187,7 +187,7 @@ static float white_noise[]={		//400 muestras
 #define CAPDAC_MIN			0
 
 
-#define CAPDAC_DEFAULT		31
+#define CAPDAC_DEFAULT		15
 
 
 #define SAMPLE_RATE_DEFAULT 	CUATROCIENTAS_Ss //CUATROCIENTAS_Ss
@@ -774,8 +774,8 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			for(int j=0; j<50; j++){
     				packets.heigh[j]= cap_to_mm(capacidad[j], SECOND_ORDER_COEF_A, SECOND_ORDER_COEF_B, SECOND_ORDER_COEF_C);
     				//printf(",%.2f", capacidad[j]);																						// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
-    				//ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
-    				ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
+    				ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
+    				//ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
     			}
     			ESP_LOGI("altura==>","\n\n\n\n_________________________________\n\n\n\n");															// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
 
