@@ -187,7 +187,7 @@ static float white_noise[]={		//400 muestras
 #define CAPDAC_MIN			0
 
 
-#define CAPDAC_DEFAULT		15
+#define CAPDAC_DEFAULT		16
 
 
 #define SAMPLE_RATE_DEFAULT 	CUATROCIENTAS_Ss //CUATROCIENTAS_Ss
