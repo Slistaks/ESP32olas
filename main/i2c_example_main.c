@@ -179,7 +179,7 @@ static float white_noise[]={		//400 muestras
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 
-#define NUMERO_DE_SENSOR 	0
+#define NUMERO_DE_SENSOR 	4
 #define ALARM_MS 			50
 #define cantMedidas 		50
 #define CAPDAC_MID_RANGE 	23
@@ -198,16 +198,74 @@ static float white_noise[]={		//400 muestras
 
 
 
+
+
+
+
+
+
+
+// COEFICIENTES SN1
 /*
-#define SECOND_ORDER_COEF_A -0.0146
-#define SECOND_ORDER_COEF_B 2.05
-#define SECOND_ORDER_COEF_C 23.6
+#define SECOND_ORDER_COEF_A
+#define SECOND_ORDER_COEF_B
+#define SECOND_ORDER_COEF_C
 */
 
-//para el sensor prototipo:
-#define SECOND_ORDER_COEF_A 0.4089
-#define SECOND_ORDER_COEF_B -62.195
-#define SECOND_ORDER_COEF_C 2378.1
+
+
+
+
+// COEFICIENTES SN
+/*
+#define SECOND_ORDER_COEF_A
+#define SECOND_ORDER_COEF_B
+#define SECOND_ORDER_COEF_C
+*/
+
+
+
+
+// COEFICIENTES SN
+/*
+#define SECOND_ORDER_COEF_A
+#define SECOND_ORDER_COEF_B
+#define SECOND_ORDER_COEF_C
+*/
+
+
+
+
+// COEFICIENTES SN4
+
+#define SECOND_ORDER_COEF_A 0.021533
+#define SECOND_ORDER_COEF_B -0.9447
+#define SECOND_ORDER_COEF_C 19.893
+
+
+
+
+// COEFICIENTES SN5
+/*
+#define SECOND_ORDER_COEF_A 0.019314
+#define SECOND_ORDER_COEF_B -0.6981
+#define SECOND_ORDER_COEF_C 13.958
+*/
+
+
+// COEFICIENTES SN6
+/*
+#define SECOND_ORDER_COEF_A 0.021859
+#define SECOND_ORDER_COEF_B -0.9717
+#define SECOND_ORDER_COEF_C 19.98
+*/
+
+
+
+
+
+
+
 
 
 
@@ -774,8 +832,8 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     			for(int j=0; j<50; j++){
     				packets.heigh[j]= cap_to_mm(capacidad[j], SECOND_ORDER_COEF_A, SECOND_ORDER_COEF_B, SECOND_ORDER_COEF_C);
     				//printf(",%.2f", capacidad[j]);																						// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
-    				ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
-    				//ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
+    				//ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
+    				ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
     			}
     			ESP_LOGI("altura==>","\n\n\n\n_________________________________\n\n\n\n");															// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
 
@@ -960,8 +1018,8 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 
             //ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 
-            //msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);					// no necesita suscribirse.
-            //ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+            esp_mqtt_client_subscribe(client, "/topic/nivel/cal", 0);					// se suscribe al topic de calibracion
+
 
             //msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);					// no necesita suscribirse.
             //ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
@@ -990,13 +1048,17 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
             break;
 
-        /*
+
         case MQTT_EVENT_DATA:
-            ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+            //ESP_LOGI(TAG, "MQTT_EVENT_DATA");
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
             printf("DATA=%.*s\r\n", event->data_len, event->data);
+
+            // ACA COMPARAR SI LO QUE RECIBIO ES == "SN4" (para sensor 4, para cada sensor)
+
+
             break;
-            */
+
 
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
