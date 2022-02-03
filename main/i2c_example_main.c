@@ -95,72 +95,7 @@ static const char *TAG = "i2c-example";
 
 
 
-/*
-// BORRAR UNA VEZ PROBADO EL FILTRO
-static int sine_1hz[]={		//400 muestras
-		50,51,52,52,53,54,55,55,56,57,58,59,59,60,61,62,62,63,64,65,65,66,67,68,68,69,70,71,71,72,73,73,74,75,75,76,77,77,78,79,79,80,81,81,82,82,83,84,84,85,
-		85,86,86,87,88,88,89,89,90,90,90,91,91,92,92,93,93,93,94,94,95,95,95,96,96,96,96,97,97,97,98,98,98,98,98,99,99,99,99,99,99,100,100,100,100,100,100,100,100,100,
-		100,100,100,100,100,100,100,100,100,100,99,99,99,99,99,99,98,98,98,98,98,97,97,97,96,96,96,96,95,95,95,94,94,93,93,93,92,92,91,91,90,90,90,89,89,88,88,87,86,86,
-		85,85,84,84,83,82,82,81,81,80,79,79,78,77,77,76,75,75,74,73,73,72,71,71,70,69,68,68,67,66,65,65,64,63,62,62,61,60,59,59,58,57,56,55,55,54,53,52,52,51,
-		50,49,48,48,47,46,45,45,44,43,42,41,41,40,39,38,38,37,36,35,35,34,33,32,32,31,30,29,29,28,27,27,26,25,25,24,23,23,22,21,21,20,19,19,18,18,17,16,16,15,
-		15,14,14,13,12,12,11,11,10,10,10,9,9,8,8,7,7,7,6,6,5,5,5,4,4,4,4,3,3,3,2,2,2,2,2,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,3,3,3,4,4,4,4,5,5,5,6,6,7,7,7,8,8,9,9,10,10,10,11,11,12,12,13,14,14,
-		15,15,16,16,17,18,18,19,19,20,21,21,22,23,23,24,25,25,26,27,27,28,29,29,30,31,32,32,33,34,35,35,36,37,38,38,39,40,41,41,42,43,44,45,45,46,47,48,48,49
-};
 
-static int sine_10hz[]={	//40 muestras
-		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
-		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
-		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
-		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42,
-		50,58,65,73,79,85,90,95,98,99,100,99,98,95,90,85,79,73,65,58,50,42,35,27,21,15,10,5,2,1,0,1,2,5,10,15,21,27,35,42
-};
-
-
-
-static int sine_2hz[]={
-		50,52,53,55,56,58,59,61,62,64,65,67,68,70,71,73,74,75,77,78,79,81,82,83,84,85,86,88,89,90,90,91,92,93,94,95,95,96,96,97,98,98,98,99,99,99,100,100,100,100,100,100,100,100,100,99,99,99,98,98,98,97,96,96,95,95,94,93,92,91,90,90,89,88,86,85,84,83,82,81,
-		79,78,77,75,74,73,71,70,68,67,65,64,62,61,59,58,56,55,53,52,50,48,47,45,44,42,41,39,38,36,35,33,32,30,29,27,26,25,23,22,21,19,18,17,16,15,14,12,11,10,10,9,8,7,6,5,5,4,4,3,2,2,2,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,2,2,
-		2,3,4,4,5,5,6,7,8,9,10,10,11,12,14,15,16,17,18,19,21,22,23,25,26,27,29,30,32,33,35,36,38,39,41,42,44,45,47,48,50,52,53,55,56,58,59,61,62,64,65,67,68,70,71,73,74,75,77,78,79,81,82,83,84,85,86,88,89,90,90,91,92,93,94,95,95,96,96,97,98,98,98,99,99,99,100,100,100,100,100,100,100,100,100,99,99,99,98,98,98,97,96,96,95,95,94,93,92,91,90,90,89,88,86,85,84,83,82,81,
-		79,78,77,75,74,73,71,70,68,67,65,64,62,61,59,58,56,55,53,52,50,48,47,45,44,42,41,39,38,36,35,33,32,30,29,27,26,25,23,22,21,19,18,17,16,15,14,12,11,10,10,9,8,7,6,5,5,4,4,3,2,2,2,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,2,2,
-		2,3,4,4,5,5,6,7,8,9,10,10,11,12,14,15,16,17,18,19,21,22,23,25,26,27,29,30,32,33,35,36,38,39,41,42,44,45,47,48,50
-};
-
-static int sine_5hz[]={
-		50,54,58,62,65,69,73,76,79,82,85,88,90,93,95,96,98,99,99,100,100,100,99,99,98,96,95,93,90,88,85,82,79,76,73,69,65,62,58,54,50,46,42,38,35,31,27,24,21,18,15,12,10,7,5,4,2,1,1,0,0,0,1,1,2,4,5,7,10,12,15,18,21,24,27,31,35,38,42,46,
-		50,54,58,62,65,69,73,76,79,82,85,88,90,93,95,96,98,99,99,100,100,100,99,99,98,96,95,93,90,88,85,82,79,76,73,69,65,62,58,54,50,46,42,38,35,31,27,24,21,18,15,12,10,7,5,4,2,1,1,0,0,0,1,1,2,4,5,7,10,12,15,18,21,24,27,31,35,38,42,46,
-		50,54,58,62,65,69,73,76,79,82,85,88,90,93,95,96,98,99,99,100,100,100,99,99,98,96,95,93,90,88,85,82,79,76,73,69,65,62,58,54,50,46,42,38,35,31,27,24,21,18,15,12,10,7,5,4,2,1,1,0,0,0,1,1,2,4,5,7,10,12,15,18,21,24,27,31,35,38,42,46,
-		50,54,58,62,65,69,73,76,79,82,85,88,90,93,95,96,98,99,99,100,100,100,99,99,98,96,95,93,90,88,85,82,79,76,73,69,65,62,58,54,50,46,42,38,35,31,27,24,21,18,15,12,10,7,5,4,2,1,1,0,0,0,1,1,2,4,5,7,10,12,15,18,21,24,27,31,35,38,42,46,
-		50,54,58,62,65,69,73,76,79,82,85,88,90,93,95,96,98,99,99,100,100,100,99,99,98,96,95,93,90,88,85,82,79,76,73,69,65,62,58,54,50,46,42,38,35,31,27,24,21,18,15,12,10,7,5,4,2,1,1,0,0,0,1,1,2,4,5,7,10,12,15,18,21,24,27,31,35,38,42,46
-};
-
-
-static int sine_20hz[]= {
-		50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,
-		65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,
-		65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,
-		65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,
-		65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50,65,79,90,98,100,98,90,79,65,50,35,21,10,2,0,2,10,21,35,50
-};
-
-
-
-static float white_noise[]={		//400 muestras
-		88.575,10.408,37.955,57.140,31.841,20.965,21.667,64.309,99.926,3.5499,43.019,7.8124,79.278,27.939,57.116,75.213,22.113,65.254,16.076,8.1166,3.0759,43.070,24.105,80.496,15.947,49.400,95.678,87.362,78.746,40.840,17.861,67.239,50.934,
-		57.362,38.877,17.981,39.808,16.137,13.672,81.005,24.490,97.557,94.521,75.836,73.565,22.729,8.9984,42.409,97.624,6.3154,87.362,1.4208,30.019,60.418,93.137,27.129,63.878,62.188,80.362,33.658,80.823,12.703,37.285,81.613,62.810,25.731,
-		48.675,5.9440,45.738,32.804,8.3251,11.979,37.330,5.5243,74.866,73.659,10.108,31.902,13.848,35.967,27.677,17.701,13.662,93.389,23.283,74.963,38.819,56.730,85.392,97.306,2.5826,99.695,8.8717,44.407,23.598,21.248,60.897,15.218,14.718,
-		42.170,44.550,33.737,22.679,77.613,25.951,53.211,14.929,22.802,61.997,91.333,29.369,90.834,34.218,47.636,35.379,75.189,11.325,13.210,74.411,94.535,99.839,35.851,63.577,22.299,63.501,41.273,26.767,75.605,99.404,76.708,14.970,1.5988,
-		21.201,91.755,37.012,39.004,39.320,69.907,38.083,78.475,80.959,11.803,79.435,57.116,72.626,94.428,59.542,44.593,42.196,82.054,50.417,81.156,53.188,69.507,45.590,63.590,4.7133,73.881,88.213,46.563,14.911,17.364,9.0941,50.246,30.795,
-		49.537,35.847,1.8161,38.012,73.669,25.193,91.896,8.5427,42.729,59.756,14.042,48.924,86.639,27.354,96.496,17.810,13.231,57.477,30.812,60.242,79.383,20.634,60.940,18.771,51.859,13.842,45.291,6.3998,59.666,43.880,66.007,92.257,1.6090,
-		13.952,76.366,81.144,80.411,95.868,31.888,1.6832,12.435,51.023,55.645,87.195,38.405,60.329,25.815,9.4878,98.955,66.827,47.441,97.784,65.808,39.135,26.610,74.806,71.501,19.016,37.744,77.881,95.349,56.856,58.646,77.805,99.039,93.810,
-		99.791,0.6966,38.416,33.960,93.333,20.246,84.506,94.615,49.127,78.518,97.681,64.436,50.925,93.629,50.829,83.602,56.851,69.686,78.853,37.819,25.895,25.785,86.631,79.122,55.487,54.997,9.1819,73.612,61.818,38.290,63.265,42.359,99.217,
-		9.5204,34.948,43.560,97.362,46.973,92.761,99.990,87.867,65.932,97.132,50.650,50.948,34.006,56.030,6.4147,91.597,97.240,15.102,86.223,14.105,58.547,23.002,83.556,54.832,53.833,44.393,33.281,82.568,59.916,46.118,8.2435,77.434,74.258,
-		5.1836,76.003,1.4758,51.825,49.715,44.504,15.601,91.299,79.157,57.055,87.038,2.9877,29.061,47.504,42.306,80.996,0.5155,51.708,99.611,76.853,82.421,24.734,2.6505,96.264,40.951,59.417,14.031,65.749,24.929,52.986,26.219,62.011,49.800,
-		60.630,82.675,5.8311,0.6103,33.373,25.744,77.181,94.822,59.901,76.407,57.761,57.903,27.194,45.684,64.521,81.110,24.862,43.031,11.197,15.613,94.945,76.112,81.657,72.057,91.929,63.439,72.635,13.473,9.9516,18.790,94.014,73.272,66.343,
-		35.277,49.395,26.821,72.086,40.292,79.951,88.867,25.815,48.702,68.315,41.256,10.058,4.9458,36.270,2.5951,51.826,57.891,25.070,2.2277,1.8383,46.532,92.945,48.679,59.323,39.960,97.101,97.050,28.066,38.088,34.888,69.934,61.388,83.118,
-		15.408,91.718,50.827,57.323
-};
-// BORRAR UNA VEZ PROBADO EL FILTRO
-*/
 
 
 
@@ -179,7 +114,9 @@ static float white_noise[]={		//400 muestras
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 
-#define NUMERO_DE_SENSOR 	4
+#define NUMERO_DE_SENSOR 		1
+#define ORDEN_APROXIMACION		2
+
 #define ALARM_MS 			50
 #define cantMedidas 		50
 #define CAPDAC_MID_RANGE 	23
@@ -206,59 +143,167 @@ static float white_noise[]={		//400 muestras
 
 
 // COEFICIENTES SN1
-/*
-#define SECOND_ORDER_COEF_A
-#define SECOND_ORDER_COEF_B
-#define SECOND_ORDER_COEF_C
-*/
+#if NUMERO_DE_SENSOR == 1
+	#define NUMERO_DE_SENSOR_STR	"SN1"			// usado para el topic de calibracion, si el topic "cal" recibe "SN1" significa que sensor 1 se pone en 0mm.
+	#define SECOND_ORDER_COEF_A		2
+	#define SECOND_ORDER_COEF_B		2
+	#define SECOND_ORDER_COEF_C		2
+
+	#define TERCER_ORDEN_COEF_A		1
+	#define TERCER_ORDEN_COEF_B		1
+	#define TERCER_ORDEN_COEF_C		1
+	#define TERCER_ORDEN_COEF_D		1
+
+	#if ORDEN_APROXIMACION == 3
+		#define COEF_A	TERCER_ORDEN_COEF_A
+		#define COEF_B	TERCER_ORDEN_COEF_B
+		#define COEF_C	TERCER_ORDEN_COEF_C
+		#define COEF_D	TERCER_ORDEN_COEF_D
+	#else
+		#define COEF_A	SECOND_ORDER_COEF_A
+		#define COEF_B	SECOND_ORDER_COEF_B
+		#define COEF_C	SECOND_ORDER_COEF_C
+		#define COEF_D	0
+	#endif
+#endif
 
 
 
 
 
-// COEFICIENTES SN
-/*
-#define SECOND_ORDER_COEF_A
-#define SECOND_ORDER_COEF_B
-#define SECOND_ORDER_COEF_C
-*/
+// COEFICIENTES SN2
+#if NUMERO_DE_SENSOR == 2
+	#define NUMERO_DE_SENSOR_STR	"SN2"			// usado para el topic de calibracion, si el topic "cal" recibe "SN2" significa que sensor 2 se pone en 0mm.
+	#define SECOND_ORDER_COEF_A
+	#define SECOND_ORDER_COEF_B
+	#define SECOND_ORDER_COEF_C
+
+	#define TERCER_ORDEN_COEF_A		1
+	#define TERCER_ORDEN_COEF_B		1
+	#define TERCER_ORDEN_COEF_C		1
+	#define TERCER_ORDEN_COEF_D		1
+
+	#if ORDEN_APROXIMACION == 3
+		#define COEF_A	TERCER_ORDEN_COEF_A
+		#define COEF_B	TERCER_ORDEN_COEF_B
+		#define COEF_C	TERCER_ORDEN_COEF_C
+		#define COEF_D	TERCER_ORDEN_COEF_D
+	#else
+		#define COEF_A	SECOND_ORDER_COEF_A
+		#define COEF_B	SECOND_ORDER_COEF_B
+		#define COEF_C	SECOND_ORDER_COEF_C
+		#define COEF_D	0
+	#endif
+#endif
 
 
 
 
-// COEFICIENTES SN
-/*
-#define SECOND_ORDER_COEF_A
-#define SECOND_ORDER_COEF_B
-#define SECOND_ORDER_COEF_C
-*/
+// COEFICIENTES SN3
+#if NUMERO_DE_SENSOR == 3
+	#define NUMERO_DE_SENSOR_STR	"SN3"			// usado para el topic de calibracion, si el topic "cal" recibe "SN3" significa que sensor 3 se pone en 0mm.
+	#define SECOND_ORDER_COEF_A
+	#define SECOND_ORDER_COEF_B
+	#define SECOND_ORDER_COEF_C
+
+	#define TERCER_ORDEN_COEF_A		1
+	#define TERCER_ORDEN_COEF_B		1
+	#define TERCER_ORDEN_COEF_C		1
+	#define TERCER_ORDEN_COEF_D		1
+
+	#if ORDEN_APROXIMACION == 3
+		#define COEF_A	TERCER_ORDEN_COEF_A
+		#define COEF_B	TERCER_ORDEN_COEF_B
+		#define COEF_C	TERCER_ORDEN_COEF_C
+		#define COEF_D	TERCER_ORDEN_COEF_D
+	#else
+		#define COEF_A	SECOND_ORDER_COEF_A
+		#define COEF_B	SECOND_ORDER_COEF_B
+		#define COEF_C	SECOND_ORDER_COEF_C
+		#define COEF_D	0
+	#endif
+#endif
 
 
 
 
 // COEFICIENTES SN4
+#if NUMERO_DE_SENSOR == 4
+	#define NUMERO_DE_SENSOR_STR	"SN4"			// usado para el topic de calibracion, si el topic "cal" recibe "SN4" significa que sensor 4 se pone en 0mm.
+	#define SECOND_ORDER_COEF_A 0.21533
+	#define SECOND_ORDER_COEF_B -9.447
+	#define SECOND_ORDER_COEF_C 198.93
 
-#define SECOND_ORDER_COEF_A 0.021533
-#define SECOND_ORDER_COEF_B -0.9447
-#define SECOND_ORDER_COEF_C 19.893
+	#define TERCER_ORDEN_COEF_A		1
+	#define TERCER_ORDEN_COEF_B		1
+	#define TERCER_ORDEN_COEF_C		1
+	#define TERCER_ORDEN_COEF_D		1
 
+	#if ORDEN_APROXIMACION == 3
+		#define COEF_A	TERCER_ORDEN_COEF_A
+		#define COEF_B	TERCER_ORDEN_COEF_B
+		#define COEF_C	TERCER_ORDEN_COEF_C
+		#define COEF_D	TERCER_ORDEN_COEF_D
+	#else
+		#define COEF_A	SECOND_ORDER_COEF_A
+		#define COEF_B	SECOND_ORDER_COEF_B
+		#define COEF_C	SECOND_ORDER_COEF_C
+		#define COEF_D	0
+	#endif
+#endif
 
 
 
 // COEFICIENTES SN5
-/*
-#define SECOND_ORDER_COEF_A 0.019314
-#define SECOND_ORDER_COEF_B -0.6981
-#define SECOND_ORDER_COEF_C 13.958
-*/
+#if NUMERO_DE_SENSOR == 5
+	#define NUMERO_DE_SENSOR_STR	"SN5"			// usado para el topic de calibracion, si el topic "cal" recibe "SN5" significa que sensor 5 se pone en 0mm.
+	#define SECOND_ORDER_COEF_A 0.19314
+	#define SECOND_ORDER_COEF_B -6.981
+	#define SECOND_ORDER_COEF_C 139.58
+
+	#define TERCER_ORDEN_COEF_A		1
+	#define TERCER_ORDEN_COEF_B		1
+	#define TERCER_ORDEN_COEF_C		1
+	#define TERCER_ORDEN_COEF_D		1
+
+	#if ORDEN_APROXIMACION == 3
+		#define COEF_A	TERCER_ORDEN_COEF_A
+		#define COEF_B	TERCER_ORDEN_COEF_B
+		#define COEF_C	TERCER_ORDEN_COEF_C
+		#define COEF_D	TERCER_ORDEN_COEF_D
+	#else
+		#define COEF_A	SECOND_ORDER_COEF_A
+		#define COEF_B	SECOND_ORDER_COEF_B
+		#define COEF_C	SECOND_ORDER_COEF_C
+		#define COEF_D	0
+	#endif
+#endif
 
 
 // COEFICIENTES SN6
-/*
-#define SECOND_ORDER_COEF_A 0.021859
-#define SECOND_ORDER_COEF_B -0.9717
-#define SECOND_ORDER_COEF_C 19.98
-*/
+#if NUMERO_DE_SENSOR == 6
+	#define NUMERO_DE_SENSOR_STR	"SN6"			// usado para el topic de calibracion, si el topic "cal" recibe "SN6" significa que sensor 6 se pone en 0mm.
+	#define SECOND_ORDER_COEF_A 0.21859
+	#define SECOND_ORDER_COEF_B -9.717
+	#define SECOND_ORDER_COEF_C 199.8
+
+	#define TERCER_ORDEN_COEF_A		1
+	#define TERCER_ORDEN_COEF_B		1
+	#define TERCER_ORDEN_COEF_C		1
+	#define TERCER_ORDEN_COEF_D		1
+
+	#if ORDEN_APROXIMACION == 3
+		#define COEF_A	TERCER_ORDEN_COEF_A
+		#define COEF_B	TERCER_ORDEN_COEF_B
+		#define COEF_C	TERCER_ORDEN_COEF_C
+		#define COEF_D	TERCER_ORDEN_COEF_D
+	#else
+		#define COEF_A	SECOND_ORDER_COEF_A
+		#define COEF_B	SECOND_ORDER_COEF_B
+		#define COEF_C	SECOND_ORDER_COEF_C
+		#define COEF_D	0
+	#endif
+#endif
 
 
 
@@ -555,6 +600,8 @@ static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 
 SampleFilter signalFilter_struct;
 float last_filtered_cap;
+uint16_t mm_mediaMovil;
+uint16_t mm_offset_cal= 0;			// el offset de nivel al calibrar.
 
 static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
@@ -830,10 +877,13 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 
     			//printf("\n\n");																										// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
     			for(int j=0; j<50; j++){
-    				packets.heigh[j]= cap_to_mm(capacidad[j], SECOND_ORDER_COEF_A, SECOND_ORDER_COEF_B, SECOND_ORDER_COEF_C);
+    				packets.heigh[j]= cap_to_mm(ORDEN_APROXIMACION, capacidad[j], COEF_A, COEF_B, COEF_C, COEF_D);
+
+    				packets.heigh[j]-= mm_offset_cal;
+
     				//printf(",%.2f", capacidad[j]);																						// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
-    				//ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
-    				ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
+    				ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
+    				//ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
     			}
     			ESP_LOGI("altura==>","\n\n\n\n_________________________________\n\n\n\n");															// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
 
@@ -960,30 +1010,12 @@ static esp_err_t __attribute__((unused)) i2c_master_write_slave(i2c_port_t i2c_n
 
 
 
-/**
- * @brief test code to operate on BH1750 sensor
- *
- * 1. set operation mode(e.g One time L-resolution mode)
- * _________________________________________________________________
- * | start | slave_addr + wr_bit + ack | write 1 byte + ack  | stop |
- * --------|---------------------------|---------------------|------|
- * 2. wait more than 24 ms
- * 3. read data
- * ______________________________________________________________________________________
- * | start | slave_addr + rd_bit + ack | read 1 byte + ack  | read 1 byte + nack | stop |
- * --------|---------------------------|--------------------|--------------------|------|
- */
 
 
 
 
 
 
-
-/*
- * Funciones MQTT
- *___________________________________________________________________________________________________________________________________________
- */
 
 
 
@@ -998,11 +1030,26 @@ static void log_error_if_nonzero(const char * message, int error_code)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 esp_mqtt_client_handle_t client;
+
 
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
 	char msg[50];	//escribo la cadena para no contar y errarle
+	char topicRecibido[50];
+	char stringRecibida[50];
+
 	sprintf(msg, "Sensor %d conectado", NUMERO_DE_SENSOR);
 
     //esp_mqtt_client_handle_t client = event->client;
@@ -1045,7 +1092,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             */
 
         case MQTT_EVENT_PUBLISHED:
-            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+            //ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
             break;
 
 
@@ -1054,8 +1101,18 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
             printf("DATA=%.*s\r\n", event->data_len, event->data);
 
-            // ACA COMPARAR SI LO QUE RECIBIO ES == "SN4" (para sensor 4, para cada sensor)
-
+            // ACA COMPARAR SI LO QUE RECIBIO ES == "SN4" (para sensor 4, para cada sensor) topic: "/topic/nivel/cal"
+            if( (event->topic_len) < 40){
+            	sprintf(topicRecibido, "%.*s", event->topic_len, event->topic);
+            	if( !strcmp(topicRecibido, "/topic/nivel/cal") ){
+            		if( (event->data_len) < 40 ){
+            			sprintf(stringRecibida, "%.*s", event->data_len, event->data);
+            			if( !strcmp(stringRecibida, NUMERO_DE_SENSOR_STR) ){
+							mm_offset_cal= mm_mediaMovil;
+            			}
+            		}
+            	}
+            }
 
             break;
 
@@ -1113,15 +1170,6 @@ static void mqtt_app_start(void)
 
 
 
-/*
- * Funciones MQTT
- *_______________________________________________________________________________________________________________________________________________________
- */
-
-
-
-
-
 
 
 
@@ -1158,6 +1206,12 @@ static void vLevelMeasureTask(void *arg)
     //uint32_t task_idx = (uint32_t)arg;
     float cap;
 
+    float mediaMovil;
+    uint16_t altura_mediaMovil;
+    float mediaMovil_sample[20]= {0};		// hago la media movil de la capacidad filtrada, para obtener un valor medio, se necesita para una mejor calibracion.
+    uint8_t mediaMovil_ix= 0;
+
+
     while (1) {
 
     	read_single_cap_pF(&cap, medidaNIVEL);
@@ -1168,6 +1222,28 @@ static void vLevelMeasureTask(void *arg)
        xSemaphoreTake(ultimaMedida_mux, portMAX_DELAY);
        last_filtered_cap= (float)SampleFilter_get(&signalFilter_struct);
        xSemaphoreGive(ultimaMedida_mux);
+
+
+
+
+       //La media movil es unicamente para la calibracion de 0mm. No tiene nada que ver con las medidas de capacidad ni con el filtro que esta en esta misma tarea.
+       if(19<mediaMovil_ix)
+    	   mediaMovil_ix= 0;
+
+       mediaMovil_sample[mediaMovil_ix++]= last_filtered_cap;
+
+       mediaMovil= 0;
+       for(int n=0; n<20; n++){
+    	   mediaMovil+= mediaMovil_sample[n];
+       }
+       mediaMovil/=20;
+
+       altura_mediaMovil= cap_to_mm(ORDEN_APROXIMACION, mediaMovil, COEF_A, COEF_B, COEF_C, COEF_D);
+
+       mm_mediaMovil= altura_mediaMovil;
+
+
+
 
         usleep(DELAY_ENTREMUESTRAS_US);
     }
@@ -1185,7 +1261,6 @@ static void vLevelMeasureTask(void *arg)
 void app_main(void)
 {
     ultimaMedida_mux = xSemaphoreCreateMutex();
-
 
     SampleFilter_init(&signalFilter_struct);
 

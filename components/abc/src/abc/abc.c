@@ -154,11 +154,16 @@ int capacimeter_done(i2c_port_t i2c_num, enum tipo_medida tipoMedida);
 
 
 
-int cap_to_mm(float cap, float a, float b, float c){
+int cap_to_mm(uint8_t orden, float cap, float a, float b, float c, float d){
+
 
 	float altura_f= (cap*cap*a + cap*b +c);
-	int altura_int = (int) altura_f;
+	if(orden==3){
+		altura_f*= cap;
+		altura_f+= d;
+	}
 
+	int altura_int = (int) altura_f;
 	if (!((altura_f - altura_int) < 0.5)) {
 		altura_int++;
 	}

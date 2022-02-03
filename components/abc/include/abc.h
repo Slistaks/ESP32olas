@@ -95,7 +95,7 @@ typedef struct mean_reliability_struct {
 // Convierte capacidad a milimetros, d[mm]= a*cap^2 + b*cap + c
 //
 //
-int cap_to_mm(float cap, float a, float b, float c);
+int cap_to_mm(uint8_t orden, float cap, float a, float b, float c, float d);
 
 
 
