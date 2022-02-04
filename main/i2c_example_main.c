@@ -114,8 +114,8 @@ static const char *TAG = "i2c-example";
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 
-#define NUMERO_DE_SENSOR 		1
-#define ORDEN_APROXIMACION		2
+#define NUMERO_DE_SENSOR 		2
+#define ORDEN_APROXIMACION		3
 
 #define ALARM_MS 			50
 #define cantMedidas 		50
@@ -142,17 +142,21 @@ static const char *TAG = "i2c-example";
 
 
 
+
+
+
+
 // COEFICIENTES SN1
 #if NUMERO_DE_SENSOR == 1
 	#define NUMERO_DE_SENSOR_STR	"SN1"			// usado para el topic de calibracion, si el topic "cal" recibe "SN1" significa que sensor 1 se pone en 0mm.
-	#define SECOND_ORDER_COEF_A		2
-	#define SECOND_ORDER_COEF_B		2
-	#define SECOND_ORDER_COEF_C		2
+	#define SECOND_ORDER_COEF_A		0.27665
+	#define SECOND_ORDER_COEF_B		-13.2921
+	#define SECOND_ORDER_COEF_C		274.7861
 
-	#define TERCER_ORDEN_COEF_A		1
-	#define TERCER_ORDEN_COEF_B		1
-	#define TERCER_ORDEN_COEF_C		1
-	#define TERCER_ORDEN_COEF_D		1
+	#define TERCER_ORDEN_COEF_A		0.0091781
+	#define TERCER_ORDEN_COEF_B		-1.0918
+	#define TERCER_ORDEN_COEF_C		53.4195
+	#define TERCER_ORDEN_COEF_D		-786.6967
 
 	#if ORDEN_APROXIMACION == 3
 		#define COEF_A	TERCER_ORDEN_COEF_A
@@ -171,17 +175,20 @@ static const char *TAG = "i2c-example";
 
 
 
+
+
+
 // COEFICIENTES SN2
 #if NUMERO_DE_SENSOR == 2
 	#define NUMERO_DE_SENSOR_STR	"SN2"			// usado para el topic de calibracion, si el topic "cal" recibe "SN2" significa que sensor 2 se pone en 0mm.
-	#define SECOND_ORDER_COEF_A
-	#define SECOND_ORDER_COEF_B
-	#define SECOND_ORDER_COEF_C
+	#define SECOND_ORDER_COEF_A		0.22605
+	#define SECOND_ORDER_COEF_B		-10.2967
+	#define SECOND_ORDER_COEF_C		256.2716
 
-	#define TERCER_ORDEN_COEF_A		1
-	#define TERCER_ORDEN_COEF_B		1
-	#define TERCER_ORDEN_COEF_C		1
-	#define TERCER_ORDEN_COEF_D		1
+	#define TERCER_ORDEN_COEF_A		0.0034596
+	#define TERCER_ORDEN_COEF_B		-0.31804
+	#define TERCER_ORDEN_COEF_C		17.7812
+	#define TERCER_ORDEN_COEF_D		-218.6046
 
 	#if ORDEN_APROXIMACION == 3
 		#define COEF_A	TERCER_ORDEN_COEF_A
@@ -227,17 +234,29 @@ static const char *TAG = "i2c-example";
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 // COEFICIENTES SN4
 #if NUMERO_DE_SENSOR == 4
 	#define NUMERO_DE_SENSOR_STR	"SN4"			// usado para el topic de calibracion, si el topic "cal" recibe "SN4" significa que sensor 4 se pone en 0mm.
-	#define SECOND_ORDER_COEF_A 0.21533
-	#define SECOND_ORDER_COEF_B -9.447
-	#define SECOND_ORDER_COEF_C 198.93
+	#define SECOND_ORDER_COEF_A 	0.21533
+	#define SECOND_ORDER_COEF_B 	-9.4471
+	#define SECOND_ORDER_COEF_C 	198.9251
 
-	#define TERCER_ORDEN_COEF_A		1
-	#define TERCER_ORDEN_COEF_B		1
-	#define TERCER_ORDEN_COEF_C		1
-	#define TERCER_ORDEN_COEF_D		1
+	#define TERCER_ORDEN_COEF_A		0.00058628
+	#define TERCER_ORDEN_COEF_B		0.1246
+	#define TERCER_ORDEN_COEF_C		-4.8513
+	#define TERCER_ORDEN_COEF_D		122.8554
 
 	#if ORDEN_APROXIMACION == 3
 		#define COEF_A	TERCER_ORDEN_COEF_A
@@ -251,20 +270,33 @@ static const char *TAG = "i2c-example";
 		#define COEF_D	0
 	#endif
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 // COEFICIENTES SN5
 #if NUMERO_DE_SENSOR == 5
 	#define NUMERO_DE_SENSOR_STR	"SN5"			// usado para el topic de calibracion, si el topic "cal" recibe "SN5" significa que sensor 5 se pone en 0mm.
-	#define SECOND_ORDER_COEF_A 0.19314
-	#define SECOND_ORDER_COEF_B -6.981
-	#define SECOND_ORDER_COEF_C 139.58
+	#define SECOND_ORDER_COEF_A 	0.19314
+	#define SECOND_ORDER_COEF_B 	-6.9808
+	#define SECOND_ORDER_COEF_C 	139.5849
 
-	#define TERCER_ORDEN_COEF_A		1
-	#define TERCER_ORDEN_COEF_B		1
-	#define TERCER_ORDEN_COEF_C		1
-	#define TERCER_ORDEN_COEF_D		1
+	#define TERCER_ORDEN_COEF_A		0.0054548
+	#define TERCER_ORDEN_COEF_B		-0.64696
+	#define TERCER_ORDEN_COEF_C		35.3998
+	#define TERCER_ORDEN_COEF_D		-559.7443
 
 	#if ORDEN_APROXIMACION == 3
 		#define COEF_A	TERCER_ORDEN_COEF_A
@@ -280,17 +312,28 @@ static const char *TAG = "i2c-example";
 #endif
 
 
+
+
+
+
+
+
+
+
+
+
+
 // COEFICIENTES SN6
 #if NUMERO_DE_SENSOR == 6
 	#define NUMERO_DE_SENSOR_STR	"SN6"			// usado para el topic de calibracion, si el topic "cal" recibe "SN6" significa que sensor 6 se pone en 0mm.
-	#define SECOND_ORDER_COEF_A 0.21859
-	#define SECOND_ORDER_COEF_B -9.717
-	#define SECOND_ORDER_COEF_C 199.8
+	#define SECOND_ORDER_COEF_A 	0.21859
+	#define SECOND_ORDER_COEF_B 	-9.7166
+	#define SECOND_ORDER_COEF_C 	199.7951
 
-	#define TERCER_ORDEN_COEF_A		1
-	#define TERCER_ORDEN_COEF_B		1
-	#define TERCER_ORDEN_COEF_C		1
-	#define TERCER_ORDEN_COEF_D		1
+	#define TERCER_ORDEN_COEF_A		-0.00034509
+	#define TERCER_ORDEN_COEF_B		0.27244
+	#define TERCER_ORDEN_COEF_C		-12.4694
+	#define TERCER_ORDEN_COEF_D		245.8257
 
 	#if ORDEN_APROXIMACION == 3
 		#define COEF_A	TERCER_ORDEN_COEF_A
@@ -882,8 +925,8 @@ static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
     				packets.heigh[j]-= mm_offset_cal;
 
     				//printf(",%.2f", capacidad[j]);																						// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
-    				ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
-    				//ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
+    				//ESP_LOGI("capacidad==>", ",%.2f", capacidad[j]);
+    				ESP_LOGI("altura==>", ",%d", packets.heigh[j]);
     			}
     			ESP_LOGI("altura==>","\n\n\n\n_________________________________\n\n\n\n");															// COMENTADO PARA PROBAR EL FILTRO, DESCOMENTAR PARA IMPRIMIR EL PAQUETE.
 
