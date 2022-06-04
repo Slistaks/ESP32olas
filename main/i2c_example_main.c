@@ -50,6 +50,8 @@
 #include "filter.h"
 //#include "components/bib/include/abc.h"
 
+#include "driver/dac.h"
+
 
 static const char *TAG = "i2c-example";
 
@@ -86,7 +88,6 @@ static const char *TAG = "i2c-example";
 #define ACK_CHECK_DIS 0x0                       /*!< I2C master will not check ack from slave */
 #define ACK_VAL 0x0                             /*!< I2C ack value */
 #define NACK_VAL 0x1                            /*!< I2C nack value */
-
 
 
 
@@ -645,6 +646,7 @@ SampleFilter signalFilter_struct;
 float last_filtered_cap;
 uint16_t mm_mediaMovil;
 uint16_t mm_offset_cal= 0;			// el offset de nivel al calibrar.
+uint16_t cap_offset_cal_dac= 0;
 
 static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
@@ -1152,6 +1154,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             			sprintf(stringRecibida, "%.*s", event->data_len, event->data);
             			if( !strcmp(stringRecibida, NUMERO_DE_SENSOR_STR) ){
 							mm_offset_cal= mm_mediaMovil;
+							cap_offset_cal_dac= last_filtered_cap;	//para quitar offset al DAC.
             			}
             		}
             	}
@@ -1265,6 +1268,9 @@ static void vLevelMeasureTask(void *arg)
        xSemaphoreTake(ultimaMedida_mux, portMAX_DELAY);
        last_filtered_cap= (float)SampleFilter_get(&signalFilter_struct);
        xSemaphoreGive(ultimaMedida_mux);
+	   
+	   //actualizo la salida del DAC:
+	   //dac_output_voltage(DAC_CHANNEL_1, i);
 
 
 
@@ -1426,7 +1432,7 @@ void app_main(void)
 
 
 	timer_enable_intr(TIMER_GROUP_0, TIMER_0);
-
+	dac_output_enable(DAC_CHANNEL_1);
 
 	/*
 	float filter_out;

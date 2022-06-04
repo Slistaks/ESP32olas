@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/ABCD/Desktop/esp-idf/components/esp_hw_support
+# Install script for directory: C:/Users/User/esp/esp-idf/components/esp_hw_support
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -32,9 +32,14 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "TRUE")
 endif()
 
+# Set default install directory permissions.
+if(NOT DEFINED CMAKE_OBJDUMP)
+  set(CMAKE_OBJDUMP "C:/Users/User/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch3-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-objdump.exe")
+endif()
+
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("C:/Users/ABCD/Desktop/2022_workspace/ESP32olas/build/esp-idf/esp_hw_support/port/esp32/cmake_install.cmake")
+  include("C:/Users/User/Documents/Temporal/ESP32olas/build/esp-idf/esp_hw_support/port/esp32/cmake_install.cmake")
 
 endif()
 
