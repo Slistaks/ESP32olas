@@ -92,16 +92,14 @@ static const char *TAG = "i2c-example";
 
 
 
-
-
-
-
-
-
-
-
-
-
+//DAC_MAX: Es el valor del DAC para una salida de corriente de 20mA.
+#define DAC_MAX 3
+//DAC_MIN: Es el valor del DAC para una salida de corriente de 4mA.
+#define DAC_MIN 0
+//ALTURA_MAX: Maxima altura EN MILIMETROS medible respecto al cero calibrado, usada para escalar la salida al DAC.
+#define ALTURA_MAX 100
+//ALTURA_MIN: Minima altura EN MILIMETROS medible respecto al cero calibrado, usada para escalar la salida al DAC.
+#define ALTURA_MIN (-100)
 
 
 
@@ -646,7 +644,6 @@ SampleFilter signalFilter_struct;
 float last_filtered_cap;
 uint16_t mm_mediaMovil;
 uint16_t mm_offset_cal= 0;			// el offset de nivel al calibrar.
-uint16_t cap_offset_cal_dac= 0;
 
 static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
@@ -1154,7 +1151,6 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
             			sprintf(stringRecibida, "%.*s", event->data_len, event->data);
             			if( !strcmp(stringRecibida, NUMERO_DE_SENSOR_STR) ){
 							mm_offset_cal= mm_mediaMovil;
-							cap_offset_cal_dac= last_filtered_cap;	//para quitar offset al DAC.
             			}
             		}
             	}
@@ -1251,7 +1247,7 @@ static void vLevelMeasureTask(void *arg)
 
     //uint32_t task_idx = (uint32_t)arg;
     float cap;
-
+	float salidaDac;
     float mediaMovil;
     uint16_t altura_mediaMovil;
     float mediaMovil_sample[20]= {0};		// hago la media movil de la capacidad filtrada, para obtener un valor medio, se necesita para una mejor calibracion.
@@ -1270,7 +1266,9 @@ static void vLevelMeasureTask(void *arg)
        xSemaphoreGive(ultimaMedida_mux);
 	   
 	   //actualizo la salida del DAC:
-	   //dac_output_voltage(DAC_CHANNEL_1, i);
+		salidaDac= cap_to_mm(ORDEN_APROXIMACION, last_filtered_cap, COEF_A, COEF_B, COEF_C, COEF_D);
+		salidaDac= (salidaDac-mm_offset_cal)*(DAC_MAX-DAC_MIN) / ((ALTURA_MAX-ALTURA_MIN)/2) + 127;
+		dac_output_voltage(DAC_CHANNEL_1, (uint8_t)salidaDac);
 
 
 
