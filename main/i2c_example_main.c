@@ -93,15 +93,13 @@ static const char *TAG = "i2c-example";
 
 
 //DAC_MAX: Es el valor del DAC para una salida de corriente de 20mA.
-#define DAC_MAX 3
+#define DAC_MAX 241
 //DAC_MIN: Es el valor del DAC para una salida de corriente de 4mA.
-#define DAC_MIN 0
-//ALTURA_MAX: Maxima altura EN MILIMETROS medible respecto al cero calibrado, usada para escalar la salida al DAC.
-#define ALTURA_MAX 100
-//ALTURA_MIN: Minima altura EN MILIMETROS medible respecto al cero calibrado, usada para escalar la salida al DAC.
-#define ALTURA_MIN (-100)
-
-
+#define DAC_MIN 44
+//RANGO_MM: Rango de medicion en milimetros. Usado para escalar la salida del DAC.
+#define RANGO_MM 362
+//DAC_12mA: Valor del DAC para el cual el lazo esta a medio rango (valor medio entre 4mA y 20mA -> 12mA).
+#define DAC_12mA 143
 
 
 
@@ -113,8 +111,8 @@ static const char *TAG = "i2c-example";
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 //_______________________________________ PARAMETROS GLOBALES MODICAR ACA:
 
-#define NUMERO_DE_SENSOR 		2
-#define ORDEN_APROXIMACION		3
+#define NUMERO_DE_SENSOR 		3
+#define ORDEN_APROXIMACION		2
 
 #define ALARM_MS 			50
 #define cantMedidas 		50
@@ -205,12 +203,13 @@ static const char *TAG = "i2c-example";
 
 
 
-// COEFICIENTES SN3
+// COEFICIENTES SN3			COEFICIENTES ESTIMADOS EN FUNCION DE LOS OTROS, NO SE PUDO ENSAYAR.
+//							NO USAR APROXIMACION DE ORDEN 3.
 #if NUMERO_DE_SENSOR == 3
 	#define NUMERO_DE_SENSOR_STR	"SN3"			// usado para el topic de calibracion, si el topic "cal" recibe "SN3" significa que sensor 3 se pone en 0mm.
-	#define SECOND_ORDER_COEF_A
-	#define SECOND_ORDER_COEF_B
-	#define SECOND_ORDER_COEF_C
+	#define SECOND_ORDER_COEF_A		0.225952
+	#define SECOND_ORDER_COEF_B		-9.94666
+	#define SECOND_ORDER_COEF_C		213.87256
 
 	#define TERCER_ORDEN_COEF_A		1
 	#define TERCER_ORDEN_COEF_B		1
@@ -643,7 +642,8 @@ static void gpio_task(void* arg)								// VER DIAGRAMA DE FLUJO
 SampleFilter signalFilter_struct;
 float last_filtered_cap;
 uint16_t mm_mediaMovil;
-uint16_t mm_offset_cal= 0;			// el offset de nivel al calibrar.
+uint16_t mm_offset_cal= 308;	// el offset de nivel al calibrar. A mitad de rango del sensor 3 para probar el lazo de corriente.
+
 
 static void timer_task(void* arg)							// VER DIAGRAMA DE FLUJO
 {
@@ -1257,6 +1257,12 @@ static void vLevelMeasureTask(void *arg)
     while (1) {
 
     	read_single_cap_pF(&cap, medidaNIVEL);
+
+		//debug{____....
+		//para probar si el lazo 4-20mA funciona, pruebo capacidades escritas a mano.
+		//cap= 12;		// Diferencial (pueden ser valores negativos) -16<cap<+16.
+		//....____}debug
+
     	cap= cap+3.125*CAPDAC_DEFAULT;
 
        SampleFilter_put(&signalFilter_struct, cap);
@@ -1265,11 +1271,23 @@ static void vLevelMeasureTask(void *arg)
        last_filtered_cap= (float)SampleFilter_get(&signalFilter_struct);
        xSemaphoreGive(ultimaMedida_mux);
 	   
+
+
 	   //actualizo la salida del DAC:
 		salidaDac= cap_to_mm(ORDEN_APROXIMACION, last_filtered_cap, COEF_A, COEF_B, COEF_C, COEF_D);
-		salidaDac= (salidaDac-mm_offset_cal)*(DAC_MAX-DAC_MIN) / ((ALTURA_MAX-ALTURA_MIN)/2) + 127;
+		salidaDac= (salidaDac-mm_offset_cal)*(DAC_MAX-DAC_MIN) / RANGO_MM + DAC_12mA;
+
+		if(salidaDac<DAC_MIN){
+			salidaDac= DAC_MIN;
+		}else if(DAC_MAX<salidaDac){
+			salidaDac= DAC_MAX;
+		}
+
 		dac_output_voltage(DAC_CHANNEL_1, (uint8_t)salidaDac);
 
+		//debug{____....
+		//printf("\n\nDAC: %d\n\n", (uint8_t)salidaDac);
+		//....____}debug
 
 
 
